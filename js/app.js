@@ -30,17 +30,17 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /**
- * Quản lý Dark/Light Theme
+ * Quản lý Dark/Light Theme (Mặc định Light Theme chuẩn phong cách Microsoft Word)
  */
 function initTheme() {
-  const savedTheme = localStorage.getItem('pwa_mark_mix_theme') || 'dark';
+  const savedTheme = localStorage.getItem('pwa_mark_mix_theme') || 'light';
   applyTheme(savedTheme);
 
   const btnThemeToggle = document.getElementById('btnThemeToggle');
   if (btnThemeToggle) {
     btnThemeToggle.addEventListener('click', () => {
-      const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
       applyTheme(newTheme);
       localStorage.setItem('pwa_mark_mix_theme', newTheme);
     });
@@ -59,6 +59,12 @@ function applyTheme(theme) {
       iconSun.classList.add('hidden');
       iconMoon.classList.remove('hidden');
     }
+  }
+
+  // Đồng bộ màu thanh tiêu đề trình duyệt (Word Blue cho Light, Dark Navy cho Dark)
+  const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+  if (metaThemeColor) {
+    metaThemeColor.setAttribute('content', theme === 'dark' ? '#090d16' : '#185abd');
   }
 }
 
