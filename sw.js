@@ -7,14 +7,17 @@
  * - Hỗ trợ force update qua message 'skipWaiting'
  */
 
-const CACHE_NAME = 'pwa-mark-n-mix-v20';
+const CACHE_NAME = 'pwa-mark-n-mix-v22';
 
 const PRECACHE_ASSETS = [
   './',
   './index.html',
+  './mix.html',
+  './convert.html',
   './huong-dan-marker.html',
   './css/style.css',
   './js/app.bundle.js',
+  './js/convert.bundle.js',
   './js/app.js',
   './js/ui.js',
   './js/parser.js',
@@ -22,6 +25,8 @@ const PRECACHE_ASSETS = [
   './js/docx-builder.js',
   './js/answer-key.js',
   './js/docx-importer.js',
+  './js/marker-converter.js',
+  './js/convert.js',
   './libs/docx.umd.js',
   './libs/jszip.min.js',
   './manifest.webmanifest',

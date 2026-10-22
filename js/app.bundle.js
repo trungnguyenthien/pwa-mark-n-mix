@@ -2815,8 +2815,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // Khởi tạo 4 mã đề mặc định bắt đầu từ 101
   updateExamCodes(4, '101');
 
-  // Nạp sẵn đề mẫu tự động khi mở trang lần đầu để giáo viên xem ngay
-  loadSampleExamDocx(true);
+  // Kiểm tra nếu chuyển từ trang Convert sang thì nạp đề vừa convert, ngược lại nạp đề mẫu
+  checkAndLoadTransferredExam().then((loaded) => {
+    if (!loaded) {
+      loadSampleExamDocx(true);
+    }
+  });
 });
 
 /**
@@ -3033,6 +3037,54 @@ function initPWA() {
       window.location.reload();
     });
   }
+}
+
+/**
+ * Lấy tệp đã lưu trong IndexedDB khi chuyển trang từ Convert sang Mix
+ */
+function getBlobFromIndexedDB(key) {
+  return new Promise((resolve) => {
+    try {
+      const request = indexedDB.open('PwaMarkMixDB', 1);
+      request.onsuccess = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains('transfers')) {
+          return resolve(null);
+        }
+        const tx = db.transaction('transfers', 'readonly');
+        const store = tx.objectStore('transfers');
+        const getReq = store.get(key);
+        getReq.onsuccess = () => resolve(getReq.result || null);
+        getReq.onerror = () => resolve(null);
+      };
+      request.onerror = () => resolve(null);
+    } catch (err) {
+      resolve(null);
+    }
+  });
+}
+
+/**
+ * Kiểm tra và nạp đề thi vừa chuyển đổi từ Convert Marker
+ */
+async function checkAndLoadTransferredExam() {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('from') === 'convert') {
+    try {
+      const data = await getBlobFromIndexedDB('pwa_transfer_exam');
+      if (data && data.buffer) {
+        const file = new File([data.buffer], data.fileName || 'de_thi_da_gan_marker.docx', {
+          type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        });
+        await handleFileLoaded(file);
+        showSnackbar('Đã tự động nạp đề thi vừa chuyển đổi từ công cụ Convert Marker!');
+        return true;
+      }
+    } catch (e) {
+      console.warn('Không thể nạp tệp chuyển tiếp:', e);
+    }
+  }
+  return false;
 }
 
 /**

@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Chuyển Đổi Marker Tự Động - PWA Mark 'n Mix</title>
+  <meta name="description" content="Công cụ chuyển đổi tự động đề thi Word truyền thống (Câu 1, 2... A, B, C, D... gạch chân đáp án) sang chuẩn marker __QUESTION__, __D__, __S__ và xuất file Word mới.">
+  <meta name="theme-color" content="#185abd">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Convert Marker">
+
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="./css/style.css">
+
+  <!-- Thư viện nội bộ đọc & ghi Word DOCX -->
+  <script src="./libs/jszip.min.js"></script>
+  <script src="./libs/docx.umd.js"></script>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Header ứng dụng -->
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="brand-logo" aria-hidden="true" style="background: #107c41;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+        </div>
+        <div class="brand-info">
+          <h1 class="brand-title">PWA Mark 'n Mix</h1>
+          <p class="brand-subtitle">Chuyển Đổi Đề Thi Sang Chuẩn Marker</p>
+        </div>
+        <div id="netStatus" class="net-status-pill online" title="Trạng thái kết nối">
+          <span class="status-dot"></span>
+          <span class="status-text">Online</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Nút Về Trang chủ -->
+        <a href="./index.html" class="btn btn-ghost btn-sm" aria-label="Trang chủ" title="Quay về Bảng điều khiển Trang chủ">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <span class="btn-label">Trang chủ</span>
+        </a>
+
+        <!-- Nút Sang trang Trộn đề -->
+        <a href="./mix.html" class="btn btn-ghost btn-sm" aria-label="Trộn đề" title="Đến công cụ Trộn đề thi">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 3 21 3 21 8"></polyline>
+            <line x1="4" y1="20" x2="21" y2="3"></line>
+            <polyline points="21 16 21 21 16 21"></polyline>
+            <line x1="15" y1="15" x2="21" y2="21"></line>
+            <line x1="4" y1="4" x2="9" y2="9"></line>
+          </svg>
+          <span class="btn-label">Trộn Đề</span>
+        </a>
+
+        <!-- Nút Mở trang Hướng dẫn -->
+        <a href="./huong-dan-marker.html" target="_blank" class="btn btn-ghost btn-sm" aria-label="Hướng dẫn sử dụng marker" title="Xem hướng dẫn chi tiết quy tắc đánh marker">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <span class="btn-label">Hướng dẫn</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Nội dung chính -->
+    <main class="convert-container">
+
+      <!-- Banner Giới thiệu tính năng -->
+      <section class="section-card" style="margin-bottom: 24px; text-align: center; padding: 28px 24px;">
+        <span class="badge" style="background: rgba(16, 124, 65, 0.12); color: #107c41; font-weight: 700; margin-bottom: 12px; display: inline-block;">
+          ✨ CÔNG CỤ CHUYỂN ĐỔI TỰ ĐỘNG
+        </span>
+        <h2 style="font-family: var(--font-heading); font-size: 1.75rem; color: var(--text-primary); margin-bottom: 10px;">
+          Chuyển Đổi Đề Thi Truyền Thống Sang Chuẩn Marker
+        </h2>
+        <p style="color: var(--text-secondary); max-width: 680px; margin: 0 auto 16px; font-size: 0.9375rem; line-height: 1.6;">
+          Nạp đề thi Word có định dạng thông thường (<strong>Câu 1., Câu 1:, Câu 1), 1)</strong> và đáp án <strong>A., A), a., a)</strong>). Hệ thống sẽ tự động chuyển đáp án gạch chân thành <code>__D__</code>, không gạch chân thành <code>__S__</code> và tạo file Word mới sẵn sàng để trộn đề.
+        </p>
+      </section>
+
+      <!-- KHU VỰC NẠP FILE WORD TRUYỀN THỐNG -->
+      <section class="section-card upload-section" aria-labelledby="uploadHeading" style="margin-bottom: 24px;">
+        <div class="section-header">
+          <div class="section-title-group">
+            <div class="step-indicator" style="background: #107c41;">1</div>
+            <div>
+              <h2 id="uploadHeading" class="section-title">Nạp File Word Đề Thi Gốc (.docx)</h2>
+              <p class="section-desc">Kéo thả file Word hoặc chọn từ thiết bị của bạn (chạy 100% offline tại máy)</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="dropzone-container">
+          <div id="dropzoneConvert" class="dropzone" tabindex="0" role="button" aria-label="Kéo thả file Word đề thi vào đây hoặc bấm để chọn file">
+            <div class="dropzone-icon" aria-hidden="true" style="color: #107c41;">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <polyline points="12 18 12 12 9 15"></polyline>
+                <polyline points="12 12 15 15"></polyline>
+              </svg>
+            </div>
+            <div class="dropzone-text">
+              <span class="dropzone-title">Kéo &amp; thả tệp Word (.docx) đề thi truyền thống vào đây</span>
+              <span class="dropzone-hint">Hệ thống tự động phát hiện Câu 1., Câu 1:, 1) và gạch chân đáp án đúng</span>
+            </div>
+            <div class="dropzone-actions">
+              <button id="btnSelectFile" type="button" class="btn btn-outline" style="border-color: #107c41; color: #107c41;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                <span>Chọn File Word Từ Máy Tính</span>
+              </button>
+              <button id="btnLoadSampleTrad" type="button" class="btn btn-ghost" title="Dùng thử dữ liệu mẫu truyền thống có sẵn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <circle cx="12" cy="13" r="2"></circle>
+                </svg>
+                <span>Nạp Đề Mẫu Thử Nghiệm</span>
+              </button>
+            </div>
+            <input id="fileInputConvert" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="sr-only" aria-label="Chọn file docx">
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; justify-content: center;">
+          <span class="hub-feature-pill">✓ Nhận diện Câu 1., Câu 1:, Câu 1), 1)</span>
+          <span class="hub-feature-pill">✓ Đáp án gạch chân <u>A.</u> / <u>A</u>) &rarr; __D__</span>
+          <span class="hub-feature-pill">✓ Tách đáp án thẳng hàng 2 - 4 cột</span>
+          <span class="hub-feature-pill">✓ Bảo toàn 100% hình ảnh inline</span>
+        </div>
+      </section>
+
+      <!-- KHU VỰC KẾT QUẢ CHUYỂN ĐỔI (ẨN KHI CHƯA NẠP FILE) -->
+      <div id="resultSection" class="hidden">
+
+        <!-- Thanh thông tin file & Nút tải chính -->
+        <div class="section-card" style="margin-bottom: 24px; padding: 20px 24px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="width: 40px; height: 40px; border-radius: 8px; background: rgba(16, 124, 65, 0.1); color: #107c41; display: flex; align-items: center; justify-content: center;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+              </div>
+              <div>
+                <div style="font-size: 0.8125rem; color: var(--text-muted); font-weight: 500;">Tệp nguồn đã phân tích:</div>
+                <div id="sourceFileName" style="font-size: 1.0625rem; font-weight: 700; color: var(--text-primary);">de_thi.docx</div>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <!-- Nút chính: Tải File Word Đã Gắn Marker -->
+              <button id="btnDownloadConvertedDocx" class="btn btn-primary" type="button" style="background: #107c41; border-color: #107c41;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                <span>Tải File Word Đã Gắn Marker (.docx)</span>
+              </button>
+
+              <!-- Nút chuyển sang trang Trộn đề -->
+              <button id="btnOpenInMixer" class="btn btn-outline" type="button" title="Mở trực tiếp file vừa chuyển đổi sang trang Trộn Đề">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="16 3 21 3 21 8"></polyline>
+                  <line x1="4" y1="20" x2="21" y2="3"></line>
+                </svg>
+                <span>Chuyển Sang Trộn Đề &rarr;</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 Khối thống kê kết quả -->
+        <div class="convert-stats-grid">
+          <div class="convert-stat-card stat-q">
+            <div class="convert-stat-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+            </div>
+            <div class="convert-stat-info">
+              <span id="statQuestions" class="convert-stat-val">0</span>
+              <span class="convert-stat-label">Tổng số câu hỏi</span>
+            </div>
+          </div>
+
+          <div class="convert-stat-card stat-d">
+            <div class="convert-stat-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <div class="convert-stat-info">
+              <span id="statD" class="convert-stat-val">0</span>
+              <span class="convert-stat-label">Đáp án đúng (__D__)</span>
+            </div>
+          </div>
+
+          <div class="convert-stat-card stat-s">
+            <div class="convert-stat-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </div>
+            <div class="convert-stat-info">
+              <span id="statS" class="convert-stat-val">0</span>
+              <span class="convert-stat-label">Đáp án sai (__S__)</span>
+            </div>
+          </div>
+
+          <div class="convert-stat-card stat-warn">
+            <div class="convert-stat-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+            </div>
+            <div class="convert-stat-info">
+              <span id="statWarningsCount" class="convert-stat-val">0</span>
+              <span class="convert-stat-label">Vấn đề cần lưu ý</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Khung hiển thị cảnh báo nếu có -->
+        <div id="warningContainer" class="hidden" style="margin-bottom: 24px;"></div>
+
+        <!-- Khung xem trước bản chuyển đổi -->
+        <section class="section-card" style="margin-bottom: 32px;">
+          <div class="preview-tabs-bar">
+            <div class="preview-tabs-group">
+              <button id="btnTabVisual" class="tab-btn active" type="button">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="9" y1="3" x2="9" y2="21"></line>
+                </svg>
+                <span>Xem Trước Trực Quan</span>
+              </button>
+              <button id="btnTabCode" class="tab-btn" type="button">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="16 18 22 12 16 6"></polyline>
+                  <polyline points="8 6 2 12 8 18"></polyline>
+                </svg>
+                <span>Mã Marker Thuần</span>
+              </button>
+            </div>
+
+            <button id="btnCopyMarkerText" class="btn btn-ghost btn-sm" type="button" title="Sao chép toàn bộ mã marker">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span>Sao Chép Mã Marker</span>
+            </button>
+          </div>
+
+          <!-- Tab 1: Bản xem trước kiểu trang Word -->
+          <div id="visualPreviewContainer"></div>
+
+          <!-- Tab 2: Textarea mã marker -->
+          <div id="codePreviewContainer" class="hidden">
+            <textarea id="rawMarkerTextarea" class="raw-textarea" readonly spellcheck="false" title="Mã Marker của đề thi"></textarea>
+          </div>
+        </section>
+
+      </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer style="text-align: center; padding: 24px 20px; color: var(--text-muted); font-size: 0.8125rem; border-top: 1px solid var(--border-medium); background: var(--bg-surface);">
+      <p style="margin-bottom: 4px;">PWA Mark 'n Mix &copy; 2026. Công cụ chuyển đổi &amp; trộn đề thi trắc nghiệm Word 100% Offline.</p>
+      <p>Hoạt động an toàn trên trình duyệt của bạn &bull; Không gửi dữ liệu đề thi lên bất kỳ máy chủ nào.</p>
+    </footer>
+
+    <!-- MODAL CẢNH BÁO HÌNH ẢNH KHÔNG PHẢI INLINE (FLOATING IMAGES) -->
+    <div id="nonInlineModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="nonInlineModalTitle">
+      <div class="modal-panel modal-panel-warning">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <div class="modal-icon-badge warning" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+            </div>
+            <div>
+              <h3 id="nonInlineModalTitle" class="modal-title">Phát Hiện Hình Ảnh Chưa Đặt In Line with Text</h3>
+              <p class="modal-subtitle">Chỉ định dạng <strong>In Line with Text</strong> mới đảm bảo bám đúng vào câu hỏi</p>
+            </div>
+          </div>
+          <button id="btnCloseNonInlineModal" class="btn-icon modal-close-btn" aria-label="Đóng cảnh báo" title="Đóng cửa sổ (Esc)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="alert-box alert-warning">
+            <div class="alert-content">
+              Phát hiện <strong id="nonInlineCount">0 hình ảnh</strong> trong file Word gốc đang ở dạng <strong>ảnh nổi (Square, Tight, Behind/In Front of Text...)</strong>.
+              <br>Trong Word, bạn vui lòng bấm chuột phải vào ảnh &rarr; <strong>Wrap Text</strong> &rarr; Chọn <strong>In Line with Text</strong> để ảnh không bị trôi khi trộn đề.
+            </div>
+          </div>
+          <div id="nonInlineList" class="non-inline-list"></div>
+        </div>
+
+        <div class="modal-footer">
+          <button id="btnDismissNonInline" class="btn btn-primary" type="button">Đã Hiểu, Tiếp Tục</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MÀN HÌNH CHỜ XỬ LÝ (LOADING OVERLAY) -->
+    <div id="loadingOverlay" class="loading-overlay" role="status" aria-live="assertive">
+      <div class="loading-card">
+        <div class="loading-spinner"></div>
+        <p id="loadingMessage" class="loading-text">Đang xử lý đề thi...</p>
+      </div>
+    </div>
+
+    <!-- Toast / Snackbar thông báo -->
+    <div id="snackbar" class="snackbar" role="status" aria-live="polite"></div>
+  </div>
+
+  <!-- Script bó ứng dụng độc lập -->
+  <script src="./js/convert.bundle.js"></script>
+</body>
+</html>
