@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hướng Dẫn Sử Dụng Marker - PWA Mark 'n Mix</title>
+  <meta name="description" content="Hướng dẫn chi tiết và đầy đủ nhất về quy tắc đánh marker đề thi trắc nghiệm Word (.docx) cho công cụ PWA Mark 'n Mix.">
+
+  <!-- Favicon & PWA Manifest -->
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <meta name="theme-color" content="#2b579a">
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- CSS gốc -->
+  <link rel="stylesheet" href="./css/style.css">
+
+  <style>
+    /* Bổ sung styles riêng cho trang Hướng dẫn */
+    .guide-page {
+      background: var(--bg-body, #f4f5f7);
+      min-height: 100vh;
+      color: var(--text-primary, #1e293b);
+    }
+
+    .guide-container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 20px 80px;
+    }
+
+    .guide-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-medium, #cbd5e1);
+      flex-wrap: wrap;
+    }
+
+    .guide-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .guide-hero {
+      background: #ffffff;
+      border: 1px solid var(--border-medium, #cbd5e1);
+      border-radius: var(--radius-md, 8px);
+      padding: 28px 24px;
+      margin-bottom: 28px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .guide-hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: rgba(43, 87, 154, 0.08);
+      color: var(--primary, #2b579a);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      border-radius: 20px;
+      margin-bottom: 12px;
+    }
+
+    .guide-hero-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 0 0 8px 0;
+      letter-spacing: -0.02em;
+    }
+
+    .guide-hero-desc {
+      font-size: 1rem;
+      color: #64748b;
+      margin: 0 0 20px 0;
+      line-height: 1.6;
+    }
+
+    .guide-quick-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding-top: 16px;
+      border-top: 1px dashed var(--border-light, #e2e8f0);
+    }
+
+    .guide-nav-pill {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 6px;
+      background: var(--bg-hover, #f1f5f9);
+      color: #334155;
+      text-decoration: none;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+    }
+
+    .guide-nav-pill:hover {
+      background: #ffffff;
+      color: var(--primary, #2b579a);
+      border-color: var(--primary, #2b579a);
+      box-shadow: 0 2px 4px rgba(43, 87, 154, 0.1);
+    }
+
+    .guide-card {
+      background: #ffffff;
+      border: 1px solid var(--border-medium, #cbd5e1);
+      border-radius: var(--radius-md, 8px);
+      padding: 28px 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    }
+
+    .guide-card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 0 0 16px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--bg-hover, #f1f5f9);
+    }
+
+    .guide-card-title .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: var(--primary, #2b579a);
+      color: #ffffff;
+      border-radius: 50%;
+      font-size: 0.875rem;
+    }
+
+    .guide-table-wrap {
+      overflow-x: auto;
+      margin: 16px 0;
+      border: 1px solid var(--border-medium, #cbd5e1);
+      border-radius: 6px;
+    }
+
+    .guide-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+      text-align: left;
+    }
+
+    .guide-table th {
+      background: #f8fafc;
+      padding: 10px 14px;
+      font-weight: 600;
+      color: #334155;
+      border-bottom: 1px solid var(--border-medium, #cbd5e1);
+    }
+
+    .guide-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border-light, #e2e8f0);
+      vertical-align: middle;
+    }
+
+    .guide-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .guide-table tr:hover td {
+      background: #fafbfc;
+    }
+
+    .marker-badge-code {
+      display: inline-block;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.875rem;
+    }
+
+    .marker-code-q {
+      background: #e0e7ff;
+      color: #3730a3;
+      border: 1px solid #c7d2fe;
+    }
+
+    .marker-code-d {
+      background: #107c41;
+      color: #ffffff;
+    }
+
+    .marker-code-s {
+      background: #d83b01;
+      color: #ffffff;
+    }
+
+    .marker-code-g {
+      background: #f1f5f9;
+      color: #1e293b;
+      border: 1px solid #cbd5e1;
+    }
+
+    .example-box {
+      background: #f8fafc;
+      border: 1px solid var(--border-medium, #cbd5e1);
+      border-radius: 6px;
+      margin: 16px 0;
+      overflow: hidden;
+    }
+
+    .example-box-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #edf2f7;
+      padding: 8px 14px;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #475569;
+      border-bottom: 1px solid var(--border-medium, #cbd5e1);
+    }
+
+    .example-code {
+      margin: 0;
+      padding: 14px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.875rem;
+      line-height: 1.6;
+      color: #1e293b;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .tip-callout {
+      display: flex;
+      gap: 12px;
+      background: #eff6ff;
+      border-left: 4px solid var(--primary, #2b579a);
+      padding: 14px 16px;
+      border-radius: 0 6px 6px 0;
+      margin: 16px 0;
+      font-size: 0.875rem;
+      line-height: 1.5;
+      color: #1e3a8a;
+    }
+
+    .tip-callout.tip-success {
+      background: #f0fdf4;
+      border-left-color: #16a34a;
+      color: #14532d;
+    }
+
+    .tip-callout svg {
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .btn-copy-code {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 4px;
+      background: #ffffff;
+      border: 1px solid var(--border-medium, #cbd5e1);
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-copy-code:hover {
+      background: var(--primary, #2b579a);
+      color: #ffffff;
+      border-color: var(--primary, #2b579a);
+    }
+
+    .guide-footer-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 36px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 640px) {
+      .guide-container {
+        padding: 16px 12px 60px;
+      }
+      .guide-hero {
+        padding: 20px 16px;
+      }
+      .guide-card {
+        padding: 20px 16px;
+      }
+      .guide-hero-title {
+        font-size: 1.4rem;
+      }
+    }
+  </style>
+</head>
+<body class="guide-page">
+
+  <div class="guide-container">
+    <!-- Thanh điều hướng đầu trang -->
+    <header class="guide-header-bar">
+      <a href="./index.html" class="guide-brand" title="Quay lại ứng dụng trộn đề">
+        <div class="brand-logo" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <polyline points="16 3 21 3 21 8"></polyline>
+            <line x1="4" y1="20" x2="21" y2="3"></line>
+            <polyline points="21 16 21 21 16 21"></polyline>
+            <line x1="15" y1="15" x2="21" y2="21"></line>
+            <line x1="4" y1="4" x2="9" y2="9"></line>
+          </svg>
+        </div>
+        <div class="brand-info">
+          <strong style="font-size: 1rem; color: var(--primary);">PWA Mark 'n Mix</strong>
+          <span style="font-size: 0.8125rem; color: #64748b; margin-left: 6px;">• Hướng Dẫn Soạn Đề</span>
+        </div>
+      </a>
+
+      <div style="display: flex; gap: 8px;">
+        <a href="./mau_de_thi_co_marker.docx" download class="btn btn-secondary btn-sm">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>Tải File Mẫu (.docx)</span>
+        </a>
+        <a href="./index.html" class="btn btn-primary btn-sm">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          <span>Vào Ứng Dụng Trộn Đề</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Banner Giới thiệu Hero -->
+    <div class="guide-hero">
+      <div class="guide-hero-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+        </svg>
+        <span>Tài Liệu Hướng Dẫn Đầy Đủ</span>
+      </div>
+      <h1 class="guide-hero-title">Quy Tắc Đánh Marker Đề Thi Trắc Nghiệm</h1>
+      <p class="guide-hero-desc">
+        Hệ marker thông minh của <strong>PWA Mark 'n Mix</strong> cho phép bạn soạn đề thi trực tiếp trên Microsoft Word cực kỳ nhanh chóng. 
+        Không cần gõ sẵn chữ "Câu 1, Câu 2" hay nhãn "A, B, C, D" – phần mềm sẽ tự động đánh số và hoán vị khoa học.
+      </p>
+
+      <div class="guide-quick-nav">
+        <a href="#sec-markers-co-ban" class="guide-nav-pill">1. Marker Câu hỏi & Đáp án</a>
+        <a href="#sec-3-dang-cau-hoi" class="guide-nav-pill">2. 3 Dạng câu hỏi chuẩn</a>
+        <a href="#sec-marker-nhom" class="guide-nav-pill">3. Marker Nhóm câu hỏi</a>
+        <a href="#sec-co-dinh-vi-tri" class="guide-nav-pill">4. Cố định vị trí (#)</a>
+        <a href="#sec-tinh-nang-linh-hoat" class="guide-nav-pill">5. Tính năng linh hoạt (By-pass)</a>
+        <a href="#sec-de-mau-hoan-chinh" class="guide-nav-pill">6. Đề thi mẫu hoàn chỉnh</a>
+      </div>
+    </div>
+
+    <!-- MỤC 1: MARKER CƠ BẢN -->
+    <section id="sec-markers-co-ban" class="guide-card">
+      <h2 class="guide-card-title">
+        <span class="step-num">1</span>
+        <span>Marker Câu Hỏi &amp; Đáp Án Cơ Bản</span>
+      </h2>
+      <p style="color: #475569; font-size: 0.9375rem; line-height: 1.6; margin-top: 0;">
+        Trong file Word, bạn chỉ cần đặt các marker phía trước nội dung câu hỏi hoặc phương án đáp án:
+      </p>
+
+      <div class="guide-table-wrap">
+        <table class="guide-table">
+          <thead>
+            <tr>
+              <th style="width: 170px;">Marker</th>
+              <th style="width: 160px;">Tên gọi</th>
+              <th>Ý nghĩa &amp; Chức năng</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="marker-badge-code marker-code-q">__QUESTION__</span></td>
+              <td><strong>Bắt đầu câu hỏi</strong></td>
+              <td>Khai báo một câu hỏi mới. Không cần gõ "Câu 1", "Câu 2" vì hệ thống sẽ tự động sinh và in đậm khi xuất file.</td>
+            </tr>
+            <tr>
+              <td><span class="marker-badge-code marker-code-d">__D__</span></td>
+              <td><strong>Đáp án Đúng</strong></td>
+              <td>Đánh dấu phương án đúng. Trong bảng đáp án và file Đáp_Án_*.docx, phương án này sẽ được tô màu xanh nổi bật.</td>
+            </tr>
+            <tr>
+              <td><span class="marker-badge-code marker-code-s">__S__</span></td>
+              <td><strong>Đáp án Sai</strong></td>
+              <td>Đánh dấu phương án gây nhiễu (sai). Sẽ được hoán vị ngẫu nhiên giữa các vị trí.</td>
+            </tr>
+            <tr>
+              <td><span class="marker-badge-code marker-code-d">__D#__</span> hoặc <span class="marker-badge-code marker-code-d">__#D__</span></td>
+              <td><strong>Đúng (Cố định #)</strong></td>
+              <td>Đáp án đúng nhưng <em>cố định vị trí</em>, không bị đảo khi trộn đề (ví dụ phương án D: "Cả A, B, C đều đúng").</td>
+            </tr>
+            <tr>
+              <td><span class="marker-badge-code marker-code-s">__S#__</span> hoặc <span class="marker-badge-code marker-code-s">__#S__</span></td>
+              <td><strong>Sai (Cố định #)</strong></td>
+              <td>Đáp án sai nhưng <em>cố định vị trí</em> (ví dụ phương án D: "Tất cả các đáp án trên đều sai").</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tip-callout tip-success">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 16v-4"></path>
+          <path d="M12 8h.01"></path>
+        </svg>
+        <div>
+          <strong>Lưu ý quan trọng:</strong> Thầy cô <strong>không cần gõ</strong> các nhãn <code>A.</code>, <code>B.</code>, <code>C.</code>, <code>D.</code> hay <code>A)</code>, <code>B)</code> trong đề gốc. Công cụ sẽ tự động gán nhãn theo đúng lựa chọn cấu hình của thầy cô khi trộn!
+        </div>
+      </div>
+    </section>
+
+    <!-- MỤC 2: 3 DẠNG CÂU HỎI CHUẨN BỘ GD&ĐT -->
+    <section id="sec-3-dang-cau-hoi" class="guide-card">
+      <h2 class="guide-card-title">
+        <span class="step-num">2</span>
+        <span>Hướng Dẫn 3 Dạng Câu Hỏi Chuẩn Bộ GD&amp;ĐT</span>
+      </h2>
+      <p style="color: #475569; font-size: 0.9375rem; line-height: 1.6; margin-top: 0;">
+        Công cụ tự động nhận diện dạng câu hỏi dựa trên cấu trúc các marker <code>__D__</code> và <code>__S__</code>:
+      </p>
+
+      <!-- Dạng 1: Nhiều lựa chọn -->
+      <h3 style="font-size: 1.0625rem; color: #1e293b; margin: 20px 0 8px 0;">Dạng 1: Trắc nghiệm 4 lựa chọn (Nhiều lựa chọn đơn)</h3>
+      <p style="color: #64748b; font-size: 0.875rem; margin: 0 0 10px 0;">Gồm <strong>1 đáp án đúng (__D__)</strong> và các <strong>đáp án sai (__S__)</strong>:</p>
+      <div class="example-box">
+        <div class="example-box-header">
+          <span>Ví dụ trong file Word</span>
+          <button class="btn-copy-code" onclick="copySnippet(this)">Sao chép</button>
+        </div>
+        <pre class="example-code">__QUESTION__ Đơn vị đo cường độ dòng điện trong hệ SI là gì?
+__D__ Ampe (A)
+__S__ Vôn (V)
+__S__ Oát (W)
+__S__ Jun (J)</pre>
+      </div>
+
+      <!-- Dạng 2: Đúng / Sai -->
+      <h3 style="font-size: 1.0625rem; color: #1e293b; margin: 24px 0 8px 0;">Dạng 2: Câu hỏi Đúng / Sai (Mỗi ý có Đúng hoặc Sai)</h3>
+      <p style="color: #64748b; font-size: 0.875rem; margin: 0 0 10px 0;">Gồm <strong>nhiều đáp án __D__ và __S__</strong> kết hợp với nhau:</p>
+      <div class="example-box">
+        <div class="example-box-header">
+          <span>Ví dụ trong file Word</span>
+          <button class="btn-copy-code" onclick="copySnippet(this)">Sao chép</button>
+        </div>
+        <pre class="example-code">__QUESTION__ Cho hàm số y = f(x) liên tục trên R. Xét tính đúng sai của các khẳng định sau:
+__D__ Hàm số luôn có đạo hàm tại mọi điểm cực trị.
+__S__ Giá trị cực đại của hàm số luôn lớn hơn giá trị cực tiểu.
+__D__ Nếu f'(x) đổi dấu từ dương sang âm khi qua x0 thì x0 là điểm cực đại.
+__S__ Đồ thị hàm số bậc ba luôn có 2 điểm cực trị.</pre>
+      </div>
+
+      <!-- Dạng 3: Trả lời ngắn -->
+      <h3 style="font-size: 1.0625rem; color: #1e293b; margin: 24px 0 8px 0;">Dạng 3: Câu hỏi Trả lời ngắn</h3>
+      <p style="color: #64748b; font-size: 0.875rem; margin: 0 0 10px 0;">Chỉ có <strong>duy nhất 1 đáp án __D__</strong> (không có __S__):</p>
+      <div class="example-box">
+        <div class="example-box-header">
+          <span>Ví dụ trong file Word</span>
+          <button class="btn-copy-code" onclick="copySnippet(this)">Sao chép</button>
+        </div>
+        <pre class="example-code">__QUESTION__ Một vật chuyển động thẳng đều với vận tốc 15 m/s. Quãng đường vật đi được trong 6 giây là bao nhiêu mét?
+__D__ 90</pre>
+      </div>
+      <div class="tip-callout">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 16v-4"></path>
+          <path d="M12 8h.01"></path>
+        </svg>
+        <div>
+          <strong>Cơ chế tự động ẩn đáp án trả lời ngắn:</strong> Trong file đề thi phát cho học sinh, đáp án của câu hỏi này sẽ <strong>tự động được ẩn đi</strong>. Trong file đáp án xuất kèm (và bảng ma trận), đáp án đúng <code>90</code> sẽ hiển thị đầy đủ và in đậm màu xanh!
+        </div>
+      </div>
+    </section>
+
+    <!-- MỤC 3: MARKER NHÓM -->
+    <section id="sec-marker-nhom" class="guide-card">
+      <h2 class="guide-card-title">
+        <span class="step-num">3</span>
+        <span>Marker Nhóm Câu Hỏi (Group Markers)</span>
+      </h2>
+      <p style="color: #475569; font-size: 0.9375rem; line-height: 1.6; margin-top: 0;">
+        Để chia đề thi thành các phần (như Phần I: Trắc nghiệm nhiều lựa chọn, Phần II: Đúng Sai, Phần III: Trả lời ngắn hoặc bài đọc hiểu tiếng Anh), sử dụng marker nhóm ở đầu mỗi phần:
+      </p>
+
+      <div class="guide-table-wrap">
+        <table class="guide-table">
+          <thead>
+            <tr>
+              <th style="width: 130px;">Marker</th>
+              <th style="width: 180px;">Chế độ đảo</th>
+              <th>Ứng dụng thực tế</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="marker-badge-code marker-code-g">__G__</span></td>
+              <td><strong>Hoán vị CẢ câu &amp; đáp án</strong></td>
+              <td>Chế độ mặc định phổ biến nhất. Đảo cả thứ tự câu hỏi và thứ tự các phương án A, B, C, D.</td>
+            </tr>
+            <tr>
+              <td><span class="marker-badge-code marker-code-g">__GQ__</span></td>
+              <td><strong>Chỉ đảo CÂU HỎI</strong></td>
+              <td>Giữ nguyên thứ tự các đáp án bên trong (thường dùng cho câu hỏi Đúng/Sai hoặc bài tập có thứ tự ý cố định).</td>
+            </tr>
+            <tr>
+              <td><span class="marker-badge-code marker-code-g">__GA__</span></td>
+              <td><strong>Chỉ đảo ĐÁP ÁN</strong></td>
+              <td>Giữ nguyên thứ tự câu hỏi (câu 1, 2, 3 giữ nguyên vị trí), chỉ hoán vị phương án đáp án.</td>
+            </tr>
+            <tr>
+              <td><span class="marker-badge-code marker-code-g">__G0__</span></td>
+              <td><strong>KHÔNG ĐẢO GÌ CẢ</strong></td>
+              <td>Rất quan trọng cho <strong>bài đọc hiểu tiếng Anh / Ngữ văn</strong>, bài nghe hoặc câu hỏi theo chuỗi logic mà thứ tự không được phép thay đổi.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 id="sec-co-dinh-vi-tri" style="font-size: 1.0625rem; color: #1e293b; margin: 24px 0 8px 0;">Cố định vị trí nhóm bằng dấu '#'</h3>
+      <p style="color: #64748b; font-size: 0.875rem; margin: 0 0 10px 0;">
+        Nếu bạn bật tùy chọn <em>"Đảo vị trí các nhóm"</em> nhưng muốn một nhóm luôn đứng yên ở vị trí ban đầu (ví dụ Phần bài nghe luôn phải ở đầu đề), hãy thêm ký tự <code>#</code> vào marker nhóm:
+      </p>
+      <div class="example-box">
+        <pre class="example-code">__G0#__  (hoặc __#G0__) -> Giữ nguyên câu & đáp án, đồng thời CỐ ĐỊNH vị trí của nhóm này ở đầu đề thi
+__G#__   (hoặc __#G__)  -> Các câu và đáp án bên trong vẫn đảo, nhưng nhóm này không bị nhảy vị trí</pre>
+      </div>
+    </section>
+
+    <!-- MỤC 4: TÍNH NĂNG LINH HOẠT VỪA ĐƯỢC BY-PASS -->
+    <section id="sec-tinh-nang-linh-hoat" class="guide-card">
+      <h2 class="guide-card-title">
+        <span class="step-num">4</span>
+        <span>Tính Năng Linh Hoạt Đã Mở Khóa (By-pass)</span>
+      </h2>
+      <p style="color: #475569; font-size: 0.9375rem; line-height: 1.6; margin-top: 0;">
+        Hệ thống phân tích cú pháp đã được nâng cấp để tối đa hóa sự thuận tiện cho giáo viên, không còn bắt bẻ các lỗi gõ văn bản thông thường:
+      </p>
+
+      <div style="display: grid; grid-template-columns: 1fr; gap: 14px;">
+        <div style="background: #f8fafc; border: 1px solid var(--border-medium); border-radius: 6px; padding: 14px 16px;">
+          <h4 style="margin: 0 0 6px 0; color: #1e293b; font-size: 0.9375rem; display: flex; align-items: center; gap: 8px;">
+            <span style="color: #107c41;">✓</span> Các đáp án có thể nằm trên cùng 1 dòng
+          </h4>
+          <p style="margin: 0 0 8px 0; color: #64748b; font-size: 0.875rem;">
+            Thầy cô có thể dàn 2 hoặc 4 đáp án trên cùng một hàng để tiết kiệm trang in Word, hệ thống sẽ tự động nhận diện tuần tự:
+          </p>
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 0.8125rem;">
+            __S__ Quãng đường __D__ Vận tốc __S__ Khối lượng __S__ Thời gian
+          </div>
+        </div>
+
+        <div style="background: #f8fafc; border: 1px solid var(--border-medium); border-radius: 6px; padding: 14px 16px;">
+          <h4 style="margin: 0 0 6px 0; color: #1e293b; font-size: 0.9375rem; display: flex; align-items: center; gap: 8px;">
+            <span style="color: #107c41;">✓</span> Chấp nhận không cần khoảng trắng sau marker
+          </h4>
+          <p style="margin: 0 0 8px 0; color: #64748b; font-size: 0.875rem;">
+            Nếu lỡ tay viết dính liền chữ vào marker, hệ thống vẫn hiểu và bóc tách chính xác:
+          </p>
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 0.8125rem;">
+            __D__Hà Nội __S__Huế __S__Đà Nẵng __S__Cần Thơ
+          </div>
+        </div>
+
+        <div style="background: #f8fafc; border: 1px solid var(--border-medium); border-radius: 6px; padding: 14px 16px;">
+          <h4 style="margin: 0 0 6px 0; color: #1e293b; font-size: 0.9375rem; display: flex; align-items: center; gap: 8px;">
+            <span style="color: #107c41;">✓</span> Hỗ trợ dấu gạch dưới điền khuyết (____)
+          </h4>
+          <p style="margin: 0 0 8px 0; color: #64748b; font-size: 0.875rem;">
+            Các câu hỏi dạng điền từ khuyết chứa chuỗi gạch chân dài như <code>____</code> hay <code>______</code> sẽ không bị nhận nhầm thành marker.
+          </p>
+        </div>
+
+        <div style="background: #f8fafc; border: 1px solid var(--border-medium); border-radius: 6px; padding: 14px 16px;">
+          <h4 style="margin: 0 0 6px 0; color: #1e293b; font-size: 0.9375rem; display: flex; align-items: center; gap: 8px;">
+            <span style="color: #107c41;">✓</span> Giữ nguyên 100% hình ảnh inline, bảng biểu và định dạng Word
+          </h4>
+          <p style="margin: 0; color: #64748b; font-size: 0.875rem;">
+            Mọi hình vẽ, đồ thị, sơ đồ nằm trong câu hỏi hoặc trong từng phương án đáp án đều được trích xuất nguyên tỉ lệ và tái hiện chính xác trong từng đề thi sau khi trộn.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- MỤC 5: ĐỀ THI MẪU HOÀN CHỈNH -->
+    <section id="sec-de-mau-hoan-chinh" class="guide-card">
+      <h2 class="guide-card-title">
+        <span class="step-num">5</span>
+        <span>Đề Thi Mẫu Hoàn Chỉnh Để Thầy Cô Tham Khảo</span>
+      </h2>
+      <p style="color: #475569; font-size: 0.9375rem; line-height: 1.6; margin-top: 0;">
+        Thầy cô có thể sao chép đoạn mẫu dưới đây và dán vào file Word trống, sau đó nạp vào ứng dụng để thử nghiệm ngay:
+      </p>
+
+      <div class="example-box">
+        <div class="example-box-header">
+          <span>Nội dung đề mẫu chuẩn có marker</span>
+          <button class="btn-copy-code" onclick="copySnippet(this)">Sao chép toàn bộ</button>
+        </div>
+        <pre class="example-code">__G__
+__QUESTION__ Trong các kim loại sau đây, kim loại nào dẫn điện tốt nhất?
+__D__ Bạc (Ag)
+__S__ Đồng (Cu)
+__S__ Nhôm (Al)
+__S__ Sắt (Fe)
+
+__QUESTION__ Cho các phát biểu sau về lực ma sát. Khẳng định nào đúng?
+__D__ Lực ma sát trượt cản trở chuyển động trượt của vật.
+__S__ Lực ma sát luôn luôn có hại trong đời sống và kỹ thuật.
+__S__ Độ lớn của lực ma sát trượt phụ thuộc vào diện tích tiếp xúc.
+__S#__ Tất cả các phát biểu trên đều đúng.
+
+__GQ__
+__QUESTION__ Xét tính đúng hoặc sai của các khẳng định sau về sóng cơ học:
+__D__ Sóng cơ không truyền được trong chân không.
+__S__ Vận tốc truyền sóng phụ thuộc vào tần số của sóng.
+__D__ Bước sóng là quãng đường sóng truyền đi được trong một chu kỳ.
+__S__ Sóng ngang chỉ truyền được trong chất khí.
+
+__G0__
+__QUESTION__ Một xe máy chuyển động trên đoạn đường thẳng với vận tốc không đổi v = 40 km/h. Thời gian để xe đi hết quãng đường 120 km là bao nhiêu giờ?
+__D__ 3</pre>
+      </div>
+
+      <div class="guide-footer-actions">
+        <a href="./mau_de_thi_co_marker.docx" download class="btn btn-secondary btn-md">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>Tải File Đề Mẫu Chuẩn (.docx)</span>
+        </a>
+        <a href="./index.html" class="btn btn-primary btn-md">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="16 3 21 3 21 8"></polyline>
+            <line x1="4" y1="20" x2="21" y2="3"></line>
+            <polyline points="21 16 21 21 16 21"></polyline>
+            <line x1="15" y1="15" x2="21" y2="21"></line>
+            <line x1="4" y1="4" x2="9" y2="9"></line>
+          </svg>
+          <span>Bắt Đầu Trộn Đề Ngay</span>
+        </a>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    function copySnippet(btn) {
+      const box = btn.closest('.example-box');
+      if (!box) return;
+      const code = box.querySelector('.example-code');
+      if (!code) return;
+
+      navigator.clipboard.writeText(code.textContent.trim()).then(() => {
+        const originalText = btn.textContent;
+        btn.textContent = '✓ Đã chép!';
+        btn.style.background = '#107c41';
+        btn.style.color = '#ffffff';
+        btn.style.borderColor = '#107c41';
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.style.background = '';
+          btn.style.color = '';
+          btn.style.borderColor = '';
+        }, 2000);
+      }).catch(err => {
+        console.error('Không thể sao chép:', err);
+      });
+    }
+  </script>
+</body>
+</html>

@@ -51,6 +51,15 @@
       </div>
 
       <div class="header-actions">
+        <!-- Nút Mở trang Hướng dẫn đánh marker -->
+        <a href="./huong-dan-marker.html" target="_blank" class="btn btn-ghost btn-sm" aria-label="Hướng dẫn sử dụng marker" title="Xem hướng dẫn chi tiết quy tắc đánh marker">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <span class="btn-label">Hướng dẫn</span>
+        </a>
 
         <!-- Nút Cập nhật ứng dụng PWA -->
         <button id="btnUpdateApp" class="btn btn-ghost btn-sm" aria-label="Cập nhật ứng dụng" title="Cập nhật phiên bản mới nhất">
@@ -89,10 +98,18 @@
             </div>
             <div>
               <h2 id="uploadHeading" class="section-title">1. Nạp File Đề Word (.docx) Đã Đánh Marker</h2>
-              <p class="section-desc">Chỉ cần tải lên file Word chứa các marker chuẩn (__QUESTION__, __D__, __S__, __G__...). Hệ thống sẽ tự động quét và phân tích.</p>
+              <p class="section-desc">Tải lên file Word đề thi đã đánh marker để hệ thống tự động quét và phân tích.</p>
             </div>
           </div>
           <div class="upload-header-actions">
+            <a id="btnOpenGuide" href="./huong-dan-marker.html" target="_blank" class="btn btn-secondary btn-sm" title="Mở trang hướng dẫn chi tiết quy tắc đánh marker đề thi">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+              <span>Hướng Dẫn Đánh Marker</span>
+            </a>
             <button id="btnLoadSample" class="btn btn-secondary btn-sm" type="button" title="Nạp đề mẫu có sẵn để trải nghiệm ngay">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
