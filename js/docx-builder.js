@@ -400,6 +400,22 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}, options 
   groups.forEach((group, gIdx) => {
     const isFirstGroup = (gIdx === 0);
 
+    // Xuất phần tiêu đề nhóm (nằm giữa marker nhóm và __QUESTION__) nếu có
+    if (group.title && group.title.trim()) {
+      const titleLines = group.title.trim().split(/\r?\n/);
+      titleLines.forEach((tLine, tIdx) => {
+        const trimmedTLine = tLine.trim();
+        if (!trimmedTLine) return;
+        const titleRuns = [];
+        appendContentRuns(titleRuns, trimmedTLine, false, COLOR_BLACK);
+
+        contentParagraphs.push(new Paragraph({
+          spacing: { before: (isFirstGroup && tIdx === 0) ? 140 : 240, after: 60 },
+          children: titleRuns
+        }));
+      });
+    }
+
     group.questions.forEach((q, qIdxInGroup) => {
       const isFirstQInGroup = (qIdxInGroup === 0);
 
@@ -415,9 +431,10 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}, options 
 
       appendContentRuns(questionRuns, q.text, false, COLOR_BLACK);
 
-      // Khoảng cách: Trước câu đầu tiên của nhóm mới (từ nhóm 2 trở đi) có khoảng trống lớn hơn rõ rệt (260 twips)
-      // Giữa các câu hỏi thông thường có khoảng trống 160 twips trước câu
-      const beforeSpacing = (!isFirstGroup && isFirstQInGroup) ? 260 : 160;
+      // Khoảng cách: Nếu nhóm chưa có tiêu đề thì trước câu đầu tiên của nhóm mới (từ nhóm 2 trở đi) có khoảng trống 260 twips
+      // Nếu nhóm đã có tiêu đề thì câu đầu tiên giãn 140 twips chuẩn
+      const hasGroupTitle = (group.title && group.title.trim());
+      const beforeSpacing = (!isFirstGroup && isFirstQInGroup && !hasGroupTitle) ? 260 : 140;
 
       contentParagraphs.push(new Paragraph({
         spacing: { before: beforeSpacing, after: 60 },

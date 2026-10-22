@@ -491,10 +491,16 @@ function parseExam(rawText) {
 
     if (markerMatches.length === 0) {
       // Dòng không có marker
+      // Nếu đang trong một nhóm nhưng chưa bắt đầu câu hỏi nào -> nội dung thuộc tiêu đề của nhóm đó
+      if (currentGroup && !currentQuestion) {
+        currentGroup.title = currentGroup.title ? `${currentGroup.title}\n${trimmedLine}` : trimmedLine;
+        continue;
+      }
+
       if (!hasMetFirstQuestion) {
         errors.push({
           line: lineNumber,
-          message: `Dòng ${lineNumber}: Nội dung '${trimmedLine.substring(0, 50)}${trimmedLine.length > 50 ? '...' : ''}' xuất hiện trước câu hỏi (__QUESTION__) đầu tiên mà không phải marker nhóm.`
+          message: `Dòng ${lineNumber}: Nội dung '${trimmedLine.substring(0, 50)}${trimmedLine.length > 50 ? '...' : ''}' xuất hiện trước câu hỏi (__QUESTION__) đầu tiên mà không thuộc nhóm nào.`
         });
         continue;
       }
@@ -517,10 +523,12 @@ function parseExam(rawText) {
         currentAnswer.text = currentAnswer.text ? `${currentAnswer.text}\n${leadingText}` : leadingText;
       } else if (currentQuestion) {
         currentQuestion.text = currentQuestion.text ? `${currentQuestion.text}\n${leadingText}` : leadingText;
+      } else if (currentGroup && !currentQuestion) {
+        currentGroup.title = currentGroup.title ? `${currentGroup.title}\n${leadingText}` : leadingText;
       } else if (!hasMetFirstQuestion) {
         errors.push({
           line: lineNumber,
-          message: `Dòng ${lineNumber}: Nội dung '${leadingText.substring(0, 50)}${leadingText.length > 50 ? '...' : ''}' xuất hiện trước câu hỏi (__QUESTION__) đầu tiên mà không phải marker nhóm.`
+          message: `Dòng ${lineNumber}: Nội dung '${leadingText.substring(0, 50)}${leadingText.length > 50 ? '...' : ''}' xuất hiện trước câu hỏi (__QUESTION__) đầu tiên mà không thuộc nhóm nào.`
         });
       }
     }
@@ -567,6 +575,7 @@ function parseExam(rawText) {
           rawMarker: token,
           startLine: lineNumber,
           labelStyle: 'ABCD', // Mặc định A. B. C. D.
+          title: content || '',
           questions: []
         };
         groups.push(currentGroup);
@@ -1374,6 +1383,22 @@ async function createExamDocxBlob(shuffledExam, headerInfo = {}, options = {}) {
   groups.forEach((group, gIdx) => {
     const isFirstGroup = (gIdx === 0);
 
+    // Xuất phần tiêu đề nhóm (nằm giữa marker nhóm và __QUESTION__) nếu có
+    if (group.title && group.title.trim()) {
+      const titleLines = group.title.trim().split(/\r?\n/);
+      titleLines.forEach((tLine, tIdx) => {
+        const trimmedTLine = tLine.trim();
+        if (!trimmedTLine) return;
+        const titleRuns = [];
+        appendContentRuns(titleRuns, trimmedTLine, false, COLOR_BLACK);
+
+        contentParagraphs.push(new Paragraph({
+          spacing: { before: (isFirstGroup && tIdx === 0) ? 140 : 240, after: 60 },
+          children: titleRuns
+        }));
+      });
+    }
+
     group.questions.forEach((q, qIdxInGroup) => {
       const isFirstQInGroup = (qIdxInGroup === 0);
 
@@ -1389,9 +1414,10 @@ async function createExamDocxBlob(shuffledExam, headerInfo = {}, options = {}) {
 
       appendContentRuns(questionRuns, q.text, false, COLOR_BLACK);
 
-      // Khoảng cách: Trước câu đầu tiên của nhóm mới (từ nhóm 2 trở đi) có khoảng trống lớn hơn rõ rệt (260 twips)
-      // Giữa các câu hỏi thông thường có khoảng trống 160 twips trước câu
-      const beforeSpacing = (!isFirstGroup && isFirstQInGroup) ? 260 : 160;
+      // Khoảng cách: Nếu nhóm chưa có tiêu đề thì trước câu đầu tiên của nhóm mới (từ nhóm 2 trở đi) có khoảng trống 260 twips
+      // Nếu nhóm đã có tiêu đề thì câu đầu tiên giãn 140 twips chuẩn
+      const hasGroupTitle = (group.title && group.title.trim());
+      const beforeSpacing = (!isFirstGroup && isFirstQInGroup && !hasGroupTitle) ? 260 : 140;
 
       contentParagraphs.push(new Paragraph({
         spacing: { before: beforeSpacing, after: 60 },
@@ -2023,6 +2049,11 @@ function renderExamPreview(parsedExam) {
             ${group.questions.length} câu hỏi
           </div>
         </div>
+        ${group.title && group.title.trim() ? `
+          <div class="preview-group-title" style="padding: 10px 16px; background: #f8fafc; border-bottom: 1px solid var(--border-light); font-size: 0.9375rem; color: #1e293b; line-height: 1.5; white-space: pre-line;">
+            ${renderFormattedContent(group.title.trim())}
+          </div>
+        ` : ''}
         <div class="preview-questions-list">
     `;
 

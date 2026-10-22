@@ -190,6 +190,11 @@ export function renderExamPreview(parsedExam) {
             ${group.questions.length} câu hỏi
           </div>
         </div>
+        ${group.title && group.title.trim() ? `
+          <div class="preview-group-title" style="padding: 10px 16px; background: #f8fafc; border-bottom: 1px solid var(--border-light); font-size: 0.9375rem; color: #1e293b; line-height: 1.5; white-space: pre-line;">
+            ${renderFormattedContent(group.title.trim())}
+          </div>
+        ` : ''}
         <div class="preview-questions-list">
     `;
 

@@ -84,10 +84,16 @@ export function parseExam(rawText) {
 
     if (markerMatches.length === 0) {
       // Dòng không có marker
+      // Nếu đang trong một nhóm nhưng chưa bắt đầu câu hỏi nào -> nội dung thuộc tiêu đề của nhóm đó
+      if (currentGroup && !currentQuestion) {
+        currentGroup.title = currentGroup.title ? `${currentGroup.title}\n${trimmedLine}` : trimmedLine;
+        continue;
+      }
+
       if (!hasMetFirstQuestion) {
         errors.push({
           line: lineNumber,
-          message: `Dòng ${lineNumber}: Nội dung '${trimmedLine.substring(0, 50)}${trimmedLine.length > 50 ? '...' : ''}' xuất hiện trước câu hỏi (__QUESTION__) đầu tiên mà không phải marker nhóm.`
+          message: `Dòng ${lineNumber}: Nội dung '${trimmedLine.substring(0, 50)}${trimmedLine.length > 50 ? '...' : ''}' xuất hiện trước câu hỏi (__QUESTION__) đầu tiên mà không thuộc nhóm nào.`
         });
         continue;
       }
@@ -110,10 +116,12 @@ export function parseExam(rawText) {
         currentAnswer.text = currentAnswer.text ? `${currentAnswer.text}\n${leadingText}` : leadingText;
       } else if (currentQuestion) {
         currentQuestion.text = currentQuestion.text ? `${currentQuestion.text}\n${leadingText}` : leadingText;
+      } else if (currentGroup && !currentQuestion) {
+        currentGroup.title = currentGroup.title ? `${currentGroup.title}\n${leadingText}` : leadingText;
       } else if (!hasMetFirstQuestion) {
         errors.push({
           line: lineNumber,
-          message: `Dòng ${lineNumber}: Nội dung '${leadingText.substring(0, 50)}${leadingText.length > 50 ? '...' : ''}' xuất hiện trước câu hỏi (__QUESTION__) đầu tiên mà không phải marker nhóm.`
+          message: `Dòng ${lineNumber}: Nội dung '${leadingText.substring(0, 50)}${leadingText.length > 50 ? '...' : ''}' xuất hiện trước câu hỏi (__QUESTION__) đầu tiên mà không thuộc nhóm nào.`
         });
       }
     }
@@ -160,6 +168,7 @@ export function parseExam(rawText) {
           rawMarker: token,
           startLine: lineNumber,
           labelStyle: 'ABCD', // Mặc định A. B. C. D.
+          title: content || '',
           questions: []
         };
         groups.push(currentGroup);
