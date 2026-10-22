@@ -16,6 +16,11 @@ const ALT_ANSWER_MARKER_REGEX = /^__(#?)(D|S)__$/;
  * Kiểm tra và phân loại marker token
  */
 function parseMarkerToken(token) {
+  // Bỏ qua đường kẻ ngang hoặc chỗ điền khuyết như '____', '______'
+  if (/^_{3,}$/.test(token)) {
+    return { isBlankFill: true };
+  }
+
   // Kiểm tra lỗi chữ O thay cho số 0
   if (token === '__GO__' || token === '__GO#__' || token === '__#GO__') {
     return { error: `Sử dụng marker sai '${token}' (chữ O). Hãy sửa thành '__G0__' (số không).` };
@@ -74,49 +79,58 @@ export function parseExam(rawText) {
     // Bỏ qua dòng trống
     if (!trimmedLine) continue;
 
-    // Kiểm tra tất cả marker trên dòng
-    const markerMatches = [...rawLine.matchAll(/__([A-Za-z0-9#_]+)__/g)];
+    // Tìm tất cả marker có dạng __...__ trên dòng (marker chỉ gồm chữ, số và ký tự #)
+    const markerMatches = [...rawLine.matchAll(/__([A-Za-z0-9#]+)__/g)];
 
-    if (markerMatches.length > 0) {
-      const firstMatch = markerMatches[0];
-      const matchIndex = firstMatch.index;
-      const leadingPart = rawLine.substring(0, matchIndex);
-
-      // 1. Marker không nằm ở đầu dòng
-      if (leadingPart.trim().length > 0) {
+    if (markerMatches.length === 0) {
+      // Dòng không có marker
+      if (!hasMetFirstQuestion) {
         errors.push({
           line: lineNumber,
-          message: `Dòng ${lineNumber}: Marker '${firstMatch[0]}' không nằm ở đầu dòng. Marker phải bắt đầu từ đầu dòng.`
+          message: `Dòng ${lineNumber}: Nội dung '${trimmedLine.substring(0, 50)}${trimmedLine.length > 50 ? '...' : ''}' xuất hiện trước câu hỏi (__QUESTION__) đầu tiên mà không phải marker nhóm.`
         });
         continue;
       }
 
-      // Marker phải có ít nhất 1 khoảng trắng theo sau hoặc là hết dòng
-      const afterMarkerIndex = matchIndex + firstMatch[0].length;
-      if (afterMarkerIndex < rawLine.length && !/\s/.test(rawLine[afterMarkerIndex])) {
-        errors.push({
-          line: lineNumber,
-          message: `Dòng ${lineNumber}: Marker '${firstMatch[0]}' phải có ít nhất một khoảng trắng theo sau.`
-        });
-        continue;
+      // Dòng nối tiếp của đáp án hoặc câu hỏi đang mở
+      if (currentAnswer) {
+        currentAnswer.text = currentAnswer.text ? `${currentAnswer.text}\n${trimmedLine}` : trimmedLine;
+      } else if (currentQuestion) {
+        currentQuestion.text = currentQuestion.text ? `${currentQuestion.text}\n${trimmedLine}` : trimmedLine;
       }
+      continue;
+    }
 
-      // Nhiều hơn 1 marker trên cùng dòng
-      if (markerMatches.length > 1) {
+    // Có ít nhất 1 marker trên dòng
+    // 1. Nếu có phần văn bản đứng trước marker đầu tiên:
+    const firstMatch = markerMatches[0];
+    const leadingText = rawLine.substring(0, firstMatch.index).trim();
+    if (leadingText) {
+      if (currentAnswer) {
+        currentAnswer.text = currentAnswer.text ? `${currentAnswer.text}\n${leadingText}` : leadingText;
+      } else if (currentQuestion) {
+        currentQuestion.text = currentQuestion.text ? `${currentQuestion.text}\n${leadingText}` : leadingText;
+      } else if (!hasMetFirstQuestion) {
         errors.push({
           line: lineNumber,
-          message: `Dòng ${lineNumber}: Phát hiện nhiều marker trên cùng một dòng ('${markerMatches.map(m => m[0]).join("', '")}'). Mỗi marker phải nằm trên một dòng riêng biệt.`
+          message: `Dòng ${lineNumber}: Nội dung '${leadingText.substring(0, 50)}${leadingText.length > 50 ? '...' : ''}' xuất hiện trước câu hỏi (__QUESTION__) đầu tiên mà không phải marker nhóm.`
         });
-        continue;
       }
     }
 
-    // Dòng bắt đầu bằng marker
-    const lineMarkerMatch = rawLine.match(/^\s*(__[A-Za-z0-9#_]+__)(.*)$/);
-    if (lineMarkerMatch) {
-      const token = lineMarkerMatch[1];
-      const content = lineMarkerMatch[2].trim();
+    // 2. Duyệt qua từng marker trên dòng theo thứ tự từ trái sang phải
+    for (let k = 0; k < markerMatches.length; k++) {
+      const match = markerMatches[k];
+      const token = match[0];
+      const startIndex = match.index + token.length;
+      const endIndex = (k + 1 < markerMatches.length) ? markerMatches[k + 1].index : rawLine.length;
+      const content = rawLine.substring(startIndex, endIndex).trim();
+
       const parsedToken = parseMarkerToken(token);
+
+      if (parsedToken.isBlankFill) {
+        continue;
+      }
 
       if (parsedToken.error) {
         errors.push({
@@ -205,23 +219,6 @@ export function parseExam(rawText) {
         currentQuestion.answers.push(currentAnswer);
         continue;
       }
-    }
-
-    // Dòng không có marker
-    // Kiểm tra: Có nội dung trước __QUESTION__ đầu tiên mà không phải marker nhóm
-    if (!hasMetFirstQuestion) {
-      errors.push({
-        line: lineNumber,
-        message: `Dòng ${lineNumber}: Nội dung '${trimmedLine.substring(0, 50)}${trimmedLine.length > 50 ? '...' : ''}' xuất hiện trước câu hỏi (__QUESTION__) đầu tiên mà không phải marker nhóm.`
-      });
-      continue;
-    }
-
-    // Dòng nối tiếp của đáp án hoặc câu hỏi đang mở
-    if (currentAnswer) {
-      currentAnswer.text = currentAnswer.text ? `${currentAnswer.text}\n${trimmedLine}` : trimmedLine;
-    } else if (currentQuestion) {
-      currentQuestion.text = currentQuestion.text ? `${currentQuestion.text}\n${trimmedLine}` : trimmedLine;
     }
   }
 

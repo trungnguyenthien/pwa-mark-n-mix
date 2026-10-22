@@ -284,8 +284,8 @@ export async function extractTextFromDocx(file) {
     }
 
     // Gỡ bỏ tag format nếu marker bị vô tình bọc trong bold/italic
-    pText = pText.replace(/<([biu])>\s*(__[A-Za-z0-9#_]+__)\s*<\/\1>/gi, '$2');
-    pText = pText.replace(/<([biu])>\s*(<([biu])>\s*(__[A-Za-z0-9#_]+__)\s*<\/\3>)\s*<\/\1>/gi, '$4');
+    pText = pText.replace(/<([biu])>\s*(__[A-Za-z0-9#]+__)\s*<\/\1>/gi, '$2');
+    pText = pText.replace(/<([biu])>\s*(<([biu])>\s*(__[A-Za-z0-9#]+__)\s*<\/\3>)\s*<\/\1>/gi, '$4');
 
     if (pText.trim()) {
       lines.push(pText.trim());
@@ -348,7 +348,8 @@ export function normalizeMarkedText(rawText) {
     if (!trimmed) continue;
 
     if (!foundFirstMarker) {
-      if (trimmed.startsWith('__G') || trimmed.startsWith('__QUESTION__')) {
+      const markersInLine = [...trimmed.matchAll(/__([A-Za-z0-9#]+)__/g)];
+      if (markersInLine.length > 0) {
         foundFirstMarker = true;
         cleanedLines.push(trimmed);
       } else {
@@ -362,7 +363,7 @@ export function normalizeMarkedText(rawText) {
   // Nếu không tìm thấy marker ở đầu (ví dụ các marker viết dính liền trên 1 dòng)
   if (cleanedLines.length === 0 && rawText.includes('__QUESTION__')) {
     const separated = rawText
-      .replace(/(__[A-Za-z0-9#_]+__)/g, '\n$1 ')
+      .replace(/(__[A-Za-z0-9#]+__)/g, '\n$1 ')
       .split('\n')
       .map(s => s.trim())
       .filter(Boolean);
