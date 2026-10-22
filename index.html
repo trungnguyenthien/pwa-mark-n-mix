@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>PWA Mark 'n Mix - Công Cụ Trộn Đề Trắc Nghiệm Từ File Word</title>
+  <meta name="description" content="Công cụ trộn đề thi trắc nghiệm chuyên nghiệp từ file Word (.docx) có đánh marker sẵn, xuất file Word chuẩn bố cục và bảng đáp án ma trận.">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Trộn Đề Thi">
+
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="./css/style.css">
+
+  <!-- Thư viện nội bộ đọc & ghi Word DOCX -->
+  <script src="./libs/jszip.min.js"></script>
+  <script src="./libs/docx.umd.js"></script>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Header ứng dụng -->
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="brand-logo" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 3 21 3 21 8"></polyline>
+            <line x1="4" y1="20" x2="21" y2="3"></line>
+            <polyline points="21 16 21 21 16 21"></polyline>
+            <line x1="15" y1="15" x2="21" y2="21"></line>
+            <line x1="4" y1="4" x2="9" y2="9"></line>
+          </svg>
+        </div>
+        <div class="brand-info">
+          <h1 class="brand-title">PWA Mark 'n Mix</h1>
+          <p class="brand-subtitle">Trộn Đề Thi Trắc Nghiệm Từ File Word</p>
+        </div>
+        <div id="netStatus" class="net-status-pill online" title="Trạng thái kết nối">
+          <span class="status-dot"></span>
+          <span class="status-text">Online</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Chuyển đổi Dark/Light mode -->
+        <button id="btnThemeToggle" class="btn-icon" aria-label="Chuyển giao diện Sáng / Tối" title="Chuyển đổi Sáng / Tối">
+          <svg class="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg class="icon-moon hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+
+        <!-- Nút Cập nhật ứng dụng PWA -->
+        <button id="btnUpdateApp" class="btn btn-ghost btn-sm" aria-label="Cập nhật ứng dụng" title="Cập nhật phiên bản mới nhất">
+          <svg class="spin-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+          <span class="btn-label">Cập nhật</span>
+        </button>
+
+        <!-- Nút Cài đặt PWA -->
+        <button id="btnInstall" class="btn btn-primary btn-sm hidden" aria-label="Cài đặt ứng dụng">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span>Cài đặt</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Nội dung chính -->
+    <main class="main-container">
+
+      <!-- PHẦN 1: KHU VỰC NẠP FILE WORD (.DOCX) ĐÃ ĐÁNH MARKER -->
+      <section class="section-card upload-section" aria-labelledby="uploadHeading">
+        <div class="section-header">
+          <div class="section-title-group">
+            <div class="section-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="12" y1="18" x2="12" y2="12"></line>
+                <line x1="9" y1="15" x2="15" y2="15"></line>
+              </svg>
+            </div>
+            <div>
+              <h2 id="uploadHeading" class="section-title">1. Nạp File Đề Word (.docx) Đã Đánh Marker</h2>
+              <p class="section-desc">Chỉ cần tải lên file Word chứa các marker chuẩn (__QUESTION__, __D__, __S__, __G__...). Hệ thống sẽ tự động quét và phân tích.</p>
+            </div>
+          </div>
+          <div class="upload-header-actions">
+            <button id="btnLoadSample" class="btn btn-secondary btn-sm" type="button" title="Nạp đề mẫu có sẵn để trải nghiệm ngay">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+              <span>Nạp Đề Mẫu Thử Nghiệm</span>
+            </button>
+            <a id="btnDownloadSampleDocx" href="./mau_de_thi_co_marker.docx" download="mau_de_thi_co_marker.docx" class="btn btn-ghost btn-sm" title="Tải file Word mẫu về máy tính">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Tải File Mẫu (.docx)</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Vùng kéo thả file (Dropzone) -->
+        <div id="dropzone" class="dropzone" role="region" aria-label="Vùng tải lên file đề thi">
+          <input type="file" id="fileInput" accept=".docx" class="file-input-hidden" aria-label="Chọn file Word đề thi">
+          <div class="dropzone-content">
+            <div class="dropzone-icon-circle">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+            </div>
+            <div class="dropzone-text">
+              <p class="dropzone-primary-text">Kéo thả file Word <strong>(.docx)</strong> vào đây, hoặc <span class="dropzone-browse">chọn từ thiết bị</span></p>
+              <p class="dropzone-secondary-text">Được thiết kế để chỉ nạp file Word đã đánh marker sẵn, hỗ trợ bảng thông tin đầu đề tự động</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Thẻ thông tin file đã nạp (xuất hiện sau khi nạp) -->
+        <div id="loadedFileCard" class="loaded-file-card hidden">
+          <div class="loaded-file-header">
+            <div class="loaded-file-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+            </div>
+            <div class="loaded-file-info">
+              <div class="file-name-row">
+                <span id="txtFileName" class="file-name">ten_file.docx</span>
+                <span id="txtFileStatusBadge" class="badge badge-success">✓ Hợp lệ</span>
+              </div>
+              <div class="file-meta-row">
+                <span id="txtFileSize" class="file-size">0 KB</span>
+                <span class="bullet">•</span>
+                <span id="txtFileStats" class="file-stats">3 nhóm câu hỏi • 3 câu hỏi • 10 đáp án</span>
+              </div>
+            </div>
+            <button id="btnChangeFile" class="btn btn-ghost btn-sm" type="button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+              </svg>
+              <span>Đổi file khác</span>
+            </button>
+          </div>
+
+          <!-- Thông báo lỗi cú pháp nếu có -->
+          <div id="errorBanner" class="error-banner hidden" role="alert">
+            <div class="error-banner-header">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <span class="error-banner-title">Phát hiện lỗi cú pháp marker trong file Word:</span>
+            </div>
+            <ul id="errorList" class="error-list"></ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- PHẦN 2: CẤU HÌNH ĐẦU ĐỀ VÀ TÙY CHỌN TRỘN ĐỀ -->
+      <div class="config-grid">
+        <!-- CỘT TRÁI: Thông tin đầu đề thi (7 ô nhập mẫu chuẩn mục 5.1) -->
+        <section class="section-card config-card" aria-labelledby="headerConfigHeading">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="3" y1="9" x2="21" y2="9"></line>
+                  <line x1="9" y1="21" x2="9" y2="9"></line>
+                </svg>
+              </div>
+              <div>
+                <h2 id="headerConfigHeading" class="section-title">2. Thông Tin Đầu Đề Thi</h2>
+                <p class="section-desc">Tự động chèn vào bảng 2 cột chuẩn của Bộ/Sở trong file Word</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="inpSoGD" class="form-label">Sở / Phòng Giáo dục &amp; Đào tạo:</label>
+              <input type="text" id="inpSoGD" class="form-input" value="SỞ GD&ĐT TP HCM" placeholder="Ví dụ: SỞ GD&ĐT TP HCM">
+            </div>
+
+            <div class="form-group">
+              <label for="inpTruong" class="form-label">Tên Trường / Đơn vị:</label>
+              <input type="text" id="inpTruong" class="form-input" value="TRƯỜNG THPT NGUYỄN HỮU HUÂN" placeholder="Ví dụ: TRƯỜNG THPT NGUYỄN HỮU HUÂN">
+            </div>
+
+            <div class="form-group">
+              <label for="inpKiKiemTra" class="form-label">Kì kiểm tra / Đợt thi:</label>
+              <input type="text" id="inpKiKiemTra" class="form-input" value="GIỮA HK 1" placeholder="Ví dụ: GIỮA HK 1, CUỐI KÌ 1...">
+            </div>
+
+            <div class="form-group">
+              <label for="inpNamHoc" class="form-label">Năm học:</label>
+              <input type="text" id="inpNamHoc" class="form-input" value="2026 - 2027" placeholder="Ví dụ: 2026 - 2027">
+            </div>
+
+            <div class="form-group">
+              <label for="inpMon" class="form-label">Môn thi:</label>
+              <input type="text" id="inpMon" class="form-input" value="VẬT LÝ" placeholder="Ví dụ: VẬT LÝ, TOÁN...">
+            </div>
+
+            <div class="form-group">
+              <label for="inpThoiGian" class="form-label">Thời gian làm bài:</label>
+              <input type="text" id="inpThoiGian" class="form-input" value="45 phút" placeholder="Ví dụ: 45 phút, 50 phút...">
+            </div>
+          </div>
+        </section>
+
+        <!-- CỘT PHẢI: Cấu hình trộn đề thi & số đề (Mục 6) -->
+        <section class="section-card config-card" aria-labelledby="mixConfigHeading">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+              </div>
+              <div>
+                <h2 id="mixConfigHeading" class="section-title">3. Cấu Hình Trộn &amp; Xuất Đề</h2>
+                <p class="section-desc">Số lượng đề, mã đề, định dạng câu hỏi và nhãn đáp án</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="options-vertical-list">
+            <!-- Số lượng đề cần trộn (Stepper) -->
+            <div class="option-row">
+              <label for="inpNumExams" class="option-label">
+                <span class="label-main">Số lượng đề cần trộn:</span>
+                <span class="label-hint">Tối đa 24 đề thi khác nhau</span>
+              </label>
+              <div class="stepper-box">
+                <button type="button" id="btnDecExams" class="btn-stepper" aria-label="Giảm 1 đề">−</button>
+                <input type="number" id="inpNumExams" class="stepper-input" value="4" min="1" max="24">
+                <button type="button" id="btnIncExams" class="btn-stepper" aria-label="Tăng 1 đề">+</button>
+              </div>
+            </div>
+
+            <!-- Mã đề đầu tiên & danh sách mã đề -->
+            <div class="option-row">
+              <label for="inpStartExamCode" class="option-label">
+                <span class="label-main">Mã đề đầu tiên:</span>
+                <span class="label-hint">3 hoặc 4 chữ số (mặc định 101)</span>
+              </label>
+              <input type="text" id="inpStartExamCode" class="form-input form-input-sm" value="101" maxlength="6" style="max-width: 110px; text-align: center;">
+            </div>
+
+            <!-- Danh sách mã đề có thể click chỉnh sửa từng mã -->
+            <div class="exam-codes-box">
+              <div class="codes-label">Danh sách mã đề sẽ xuất (bấm trực tiếp vào ô để sửa từng mã):</div>
+              <div id="examCodesContainer" class="exam-codes-container"></div>
+            </div>
+
+            <!-- Kiểu đánh số câu hỏi -->
+            <div class="option-row">
+              <span class="option-label">
+                <span class="label-main">Định dạng số câu:</span>
+                <span class="label-hint">Cách hiển thị đầu câu hỏi</span>
+              </span>
+              <div class="segmented-control" role="radiogroup" aria-label="Định dạng số câu">
+                <label class="segment-item">
+                  <input type="radio" name="radioNumbering" value="dot" checked>
+                  <span>Câu 1.</span>
+                </label>
+                <label class="segment-item">
+                  <input type="radio" name="radioNumbering" value="colon">
+                  <span>Câu 1:</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Số thứ tự câu bắt đầu -->
+            <div class="option-row">
+              <label for="inpStartQNum" class="option-label">
+                <span class="label-main">Số câu đầu tiên của đề:</span>
+                <span class="label-hint">Đánh số liên tục từ số này</span>
+              </label>
+              <input type="number" id="inpStartQNum" class="form-input form-input-sm" value="1" min="1" max="1000" style="max-width: 110px; text-align: center;">
+            </div>
+
+            <!-- Kiểu nhãn đáp án mặc định -->
+            <div class="option-row">
+              <label for="selDefaultLabelStyle" class="option-label">
+                <span class="label-main">Kiểu nhãn đáp án:</span>
+                <span class="label-hint">Áp dụng cho các phương án</span>
+              </label>
+              <select id="selDefaultLabelStyle" class="form-select" style="max-width: 160px;">
+                <option value="ABCD" selected>A. B. C. D.</option>
+                <option value="abcd">a) b) c) d)</option>
+                <option value="1234">1. 2. 3. 4.</option>
+              </select>
+            </div>
+
+            <!-- Đảo vị trí các nhóm -->
+            <div class="option-row toggle-row">
+              <span class="option-label">
+                <span class="label-main">Đảo vị trí các nhóm:</span>
+                <span class="label-hint">Nhóm không có marker # được phép đổi chỗ</span>
+              </span>
+              <label class="switch">
+                <input type="checkbox" id="chkShuffleGroups">
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- PHẦN 3: XEM TRƯỚC VÀ KIỂM TRA ĐỀ ĐÃ NẠP -->
+      <section id="previewSection" class="section-card preview-section" aria-labelledby="previewHeading">
+        <div class="section-header">
+          <div class="section-title-group">
+            <div class="section-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </div>
+            <div>
+              <h2 id="previewHeading" class="section-title">4. Bản Xem Trước Cấu Trúc Đề Thi</h2>
+              <p class="section-desc">Kiểm tra trực quan các nhóm, câu hỏi và đáp án trước khi xuất file</p>
+            </div>
+          </div>
+          <button id="btnToggleRawView" class="btn btn-ghost btn-xs" type="button">
+            <span>Xem văn bản trích xuất</span>
+          </button>
+        </div>
+
+        <!-- Khung xem văn bản thô trích xuất (ẩn mặc định) -->
+        <div id="rawViewContainer" class="raw-view-container hidden">
+          <div class="raw-view-header">
+            <span>Văn bản trích xuất từ file Word:</span>
+            <span id="rawTextMeta">0 dòng</span>
+          </div>
+          <pre id="txtRawExtracted" class="raw-text-pre"></pre>
+        </div>
+
+        <!-- Danh sách câu hỏi xem trước tô màu -->
+        <div id="previewQuestionsContainer" class="preview-questions-container">
+          <div class="empty-state">
+            <div class="empty-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+            </div>
+            <p class="empty-title">Chưa nạp file đề thi nào</p>
+            <p class="empty-desc">Hãy kéo thả file Word (.docx) ở Bước 1 hoặc bấm <strong>"Nạp Đề Mẫu Thử Nghiệm"</strong> để xem trước và trộn đề.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- HÀNH ĐỘNG CHÍNH: NÚT TRỘN VÀ XUẤT ĐỀ -->
+      <div class="action-footer">
+        <button id="btnMixAndExport" class="btn btn-primary btn-xl btn-mix" type="button" disabled>
+          <svg class="mix-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <polyline points="16 3 21 3 21 8"></polyline>
+            <line x1="4" y1="20" x2="21" y2="3"></line>
+            <polyline points="21 16 21 21 16 21"></polyline>
+            <line x1="15" y1="15" x2="21" y2="21"></line>
+            <line x1="4" y1="4" x2="9" y2="9"></line>
+          </svg>
+          <span class="btn-mix-text">Trộn &amp; Xuất Đề Thi (.docx)</span>
+        </button>
+      </div>
+    </main>
+
+    <!-- HỘP THOẠI KẾT QUẢ XUẤT ĐỀ (MODAL) -->
+    <div id="exportModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="exportModalTitle">
+      <div class="modal-panel">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <div class="modal-success-badge">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <div>
+              <h3 id="exportModalTitle" class="modal-title">Trộn Đề Thi Hoàn Tất!</h3>
+              <p class="modal-subtitle">Đã tạo xong các file đề thi Word và Bảng đáp án ma trận</p>
+            </div>
+          </div>
+          <button id="btnCloseExportModal" class="btn-icon" aria-label="Đóng hộp thoại">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Tải trọn bộ ZIP -->
+          <div class="zip-download-box">
+            <button id="btnDownloadZip" class="btn btn-primary btn-lg btn-block" type="button">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Tải Toàn Bộ (File .ZIP Đầy Đủ)</span>
+            </button>
+            <p class="zip-hint">Bao gồm tất cả các mã đề thi (.docx) và file Bảng Đáp Án (.docx)</p>
+          </div>
+
+          <!-- Danh sách từng file riêng lẻ -->
+          <div class="download-list-section">
+            <div class="download-list-title">Tải từng file riêng lẻ:</div>
+            <div id="fileDownloadList" class="file-download-list"></div>
+          </div>
+
+          <!-- Bảng xem trước ma trận đáp án nhanh -->
+          <div class="answer-matrix-preview">
+            <div class="matrix-title">Bảng Đáp Án Nhanh:</div>
+            <div class="table-responsive">
+              <table id="tblAnswerPreview" class="matrix-table"></table>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button id="btnShareFiles" class="btn btn-secondary hidden" type="button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+            </svg>
+            <span>Chia sẻ Tệp (Mobile)</span>
+          </button>
+          <button id="btnCloseModalBtn" class="btn btn-ghost" type="button">Đóng</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HỘP THOẠI HƯỚNG DẪN CÀI ĐẶT IOS SAFARI -->
+    <div id="iosInstallModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="iosModalTitle">
+      <div class="modal-panel modal-panel-sm">
+        <div class="modal-header">
+          <h3 id="iosModalTitle" class="modal-title">Cài đặt trên iPhone / iPad</h3>
+          <button id="btnCloseIosModal" class="btn-icon" aria-label="Đóng">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body" style="text-align: center;">
+          <p style="margin-bottom: 16px; color: var(--text-secondary);">Để cài đặt ứng dụng vào màn hình chính thiết bị Apple iOS:</p>
+          <ol class="ios-steps">
+            <li>Nhấn vào nút <strong>Chia sẻ (Share)</strong> <span class="share-icon-sample">⎋</span> ở thanh công cụ dưới đáy Safari.</li>
+            <li>Cuộn xuống và chọn <strong>Thêm vào Màn hình chính (Add to Home Screen)</strong> ⊕.</li>
+            <li>Nhấn <strong>Thêm (Add)</strong> ở góc trên bên phải.</li>
+          </ol>
+        </div>
+        <div class="modal-footer">
+          <button id="btnGotItIos" class="btn btn-primary btn-block" type="button">Đã hiểu</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast / Snackbar thông báo -->
+    <div id="snackbar" class="snackbar" role="status" aria-live="polite"></div>
+  </div>
+
+  <!-- Entry Script -->
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
