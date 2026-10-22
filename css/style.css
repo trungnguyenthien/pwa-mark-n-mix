@@ -407,15 +407,17 @@ body {
 }
 
 .dropzone {
+  display: block;
   position: relative;
   border: 2px dashed var(--border-medium);
   border-radius: var(--radius-lg);
-  padding: 44px 24px;
+  padding: 38px 24px;
   background: var(--bg-surface-elevated);
   text-align: center;
   cursor: pointer;
   transition: all var(--transition-normal);
   overflow: hidden;
+  user-select: none;
 }
 
 .dropzone::before {
@@ -446,6 +448,7 @@ body {
   opacity: 0;
   overflow: hidden;
   z-index: -1;
+  pointer-events: none;
 }
 
 .dropzone-content {
@@ -454,15 +457,15 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 
 .dropzone-icon-circle {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 68px;
-  height: 68px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   background: var(--primary-subtle);
   color: var(--primary);
@@ -477,19 +480,25 @@ body {
 .dropzone-primary-text {
   font-size: 1.0625rem;
   color: var(--text-primary);
+  font-weight: 500;
 }
 
-.dropzone-browse {
-  color: var(--primary);
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  font-weight: 600;
+.dropzone-btn-wrap {
+  margin: 8px 0;
+}
+
+.dropzone-action-btn {
+  pointer-events: none; /* Sự kiện click sẽ được chuyển trực tiếp đến label để mở file dialog ngay lập tức */
+  box-shadow: 0 4px 14px var(--primary-glow);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .dropzone-secondary-text {
   font-size: 0.8125rem;
   color: var(--text-muted);
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 /* Loaded File Card */

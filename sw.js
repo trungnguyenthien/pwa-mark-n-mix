@@ -7,12 +7,13 @@
  * - Hỗ trợ force update qua message 'skipWaiting'
  */
 
-const CACHE_NAME = 'pwa-mark-n-mix-v4';
+const CACHE_NAME = 'pwa-mark-n-mix-v5';
 
 const PRECACHE_ASSETS = [
   './',
   './index.html',
   './css/style.css',
+  './js/app.bundle.js',
   './js/app.js',
   './js/ui.js',
   './js/parser.js',

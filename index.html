@@ -128,8 +128,8 @@
           </div>
         </div>
 
-        <!-- Vùng kéo thả file (Dropzone) -->
-        <div id="dropzone" class="dropzone" role="region" aria-label="Vùng tải lên file đề thi">
+        <!-- Vùng kéo thả file (Dropzone) dạng label chuẩn kết nối với fileInput -->
+        <label id="dropzone" for="fileInput" class="dropzone" role="button" tabindex="0" aria-label="Bấm hoặc kéo thả file Word đề thi vào đây">
           <input type="file" id="fileInput" accept=".docx" class="file-input-hidden" aria-label="Chọn file Word đề thi">
           <div class="dropzone-content">
             <div class="dropzone-icon-circle">
@@ -140,11 +140,22 @@
               </svg>
             </div>
             <div class="dropzone-text">
-              <p class="dropzone-primary-text">Kéo thả file Word <strong>(.docx)</strong> vào đây, hoặc <span class="dropzone-browse">chọn từ thiết bị</span></p>
+              <p class="dropzone-primary-text">Kéo thả file Word <strong>(.docx)</strong> vào đây, hoặc</p>
+              <div class="dropzone-btn-wrap">
+                <span class="btn btn-primary btn-sm dropzone-action-btn">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="12" y1="18" x2="12" y2="12"></line>
+                    <line x1="9" y1="15" x2="15" y2="15"></line>
+                  </svg>
+                  <span>Chọn file từ thiết bị</span>
+                </span>
+              </div>
               <p class="dropzone-secondary-text">Được thiết kế để chỉ nạp file Word đã đánh marker sẵn, hỗ trợ bảng thông tin đầu đề tự động</p>
             </div>
           </div>
-        </div>
+        </label>
 
         <!-- Thẻ thông tin file đã nạp (xuất hiện sau khi nạp) -->
         <div id="loadedFileCard" class="loaded-file-card hidden">
@@ -503,7 +514,7 @@
     <div id="snackbar" class="snackbar" role="status" aria-live="polite"></div>
   </div>
 
-  <!-- Entry Script -->
-  <script type="module" src="./js/app.js"></script>
+  <!-- Entry Script: Chạy độc lập hoàn hảo cả trên Localhost HTTP lẫn mở trực tiếp file:// -->
+  <script src="./js/app.bundle.js"></script>
 </body>
 </html>

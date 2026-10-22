@@ -175,9 +175,20 @@ function initEventListeners() {
   const btnToggleRawView = document.getElementById('btnToggleRawView');
   const rawViewContainer = document.getElementById('rawViewContainer');
 
-  // Drag and Drop
+  // Xử lý nạp file và kéo thả (Dropzone)
   if (dropzone && fileInput) {
-    dropzone.addEventListener('click', () => fileInput.click());
+    // Ngăn chặn sự kiện click từ input nổi bọt ngược lên label dropzone gây đệ quy
+    fileInput.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+
+    // Hỗ trợ phím Enter hoặc Space khi focus bằng bàn phím vào dropzone
+    dropzone.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        fileInput.click();
+      }
+    });
 
     ['dragenter', 'dragover'].forEach(name => {
       dropzone.addEventListener(name, (e) => {
@@ -203,20 +214,27 @@ function initEventListeners() {
     fileInput.addEventListener('change', () => {
       if (fileInput.files && fileInput.files.length > 0) {
         handleFileLoaded(fileInput.files[0]);
+        // Reset giá trị để nếu người dùng chọn lại cùng một file vẫn nhận diện change
+        fileInput.value = '';
       }
     });
   }
 
   // Nút Nạp Đề Mẫu
   if (btnLoadSample) {
-    btnLoadSample.addEventListener('click', () => {
+    btnLoadSample.addEventListener('click', (e) => {
+      e.preventDefault();
       loadSampleExamDocx(false);
     });
   }
 
   // Đổi file khác
   if (btnChangeFile && fileInput) {
-    btnChangeFile.addEventListener('click', () => fileInput.click());
+    btnChangeFile.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      fileInput.click();
+    });
   }
 
   // Bật/tắt xem văn bản thô
