@@ -1004,7 +1004,7 @@ input:checked + .slider::before {
   border-radius: var(--radius-sm);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   font-family: 'Times New Roman', Times, serif;
   font-size: 1rem; /* 12pt */
 }
@@ -1014,6 +1014,11 @@ input:checked + .slider::before {
   font-size: 1rem;
   color: var(--text-primary);
   line-height: 1.5;
+  margin-bottom: 4px;
+}
+
+.question-title-line .exam-img-frame {
+  margin: 6px 0 10px 0;
 }
 
 .question-qnum {
@@ -1025,27 +1030,30 @@ input:checked + .slider::before {
 .answers-grid {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   padding-left: 12px;
 }
 
 .answer-item {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  font-size: 0.875rem;
-  line-height: 1.4;
+  gap: 10px;
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
 .ans-pill {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
-  padding: 1px 7px;
-  border-radius: var(--radius-sm);
+  padding: 1px 8px;
+  border-radius: var(--radius-sm, 4px);
   font-size: 0.75rem;
   font-weight: 700;
   flex-shrink: 0;
+  height: 22px;
+  line-height: 22px;
   margin-top: 1px;
 }
 
@@ -1068,6 +1076,8 @@ input:checked + .slider::before {
 .answer-text {
   color: var(--text-primary);
   flex: 1;
+  min-width: 0;
+  line-height: 1.5;
   word-break: break-word;
 }
 
@@ -1090,19 +1100,22 @@ input:checked + .slider::before {
    Exam Image Display (Bảo toàn chuẩn Frame & Tỉ lệ từ file Word gốc)
    ========================================================================== */
 .exam-img-frame {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-block;
+  vertical-align: top;
   max-width: 100%;
-  vertical-align: middle;
-  margin: 4px 6px;
+  margin: 2px 6px;
+}
+
+.answer-item .exam-img-frame {
+  margin: 2px 6px 4px 6px;
+  vertical-align: top;
 }
 
 .exam-preview-img {
-  display: inline-block;
+  display: block;
   max-width: 100%;
   height: auto;
-  border-radius: var(--radius-sm, 6px);
+  border-radius: var(--radius-sm, 4px);
   border: 1px solid var(--border-medium);
   background: #ffffff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);

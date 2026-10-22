@@ -51,7 +51,7 @@ function wrapRunFormatting(text, b, i, u) {
  * @param {Blob|File|ArrayBuffer} file
  * @returns {Promise<{ rawText: string, imageMap: Object }>}
  */
-export async function extractTextFromDocx(file) {
+async function extractTextFromDocx(file) {
   const JSZip = getJSZip();
   if (!JSZip) {
     throw new Error('Thư viện JSZip chưa được tải!');
@@ -308,7 +308,7 @@ export async function extractTextFromDocx(file) {
  * @param {string} rawText
  * @returns {Object} { text, extractedHeader }
  */
-export function normalizeMarkedText(rawText) {
+function normalizeMarkedText(rawText) {
   const extractedHeader = {};
 
   // Hàm quét thông tin đầu đề (nếu xuất hiện trước marker đầu tiên)
@@ -387,7 +387,7 @@ export function normalizeMarkedText(rawText) {
  * @param {File|Blob} file
  * @returns {Promise<Object>} { text, extractedHeader, fileName, fileSize, imageMap }
  */
-export async function readExamDocx(file) {
+async function readExamDocx(file) {
   const fileName = (file && file.name) ? file.name : 'De_Thi.docx';
   const fileSize = file.size || 0;
 
@@ -461,7 +461,7 @@ function parseMarkerToken(token) {
  * @param {string} rawText
  * @returns {Object} { valid: boolean, errors: Array, groups: Array, stats: Object }
  */
-export function parseExam(rawText) {
+function parseExam(rawText) {
   const errors = [];
   const lines = rawText.split(/\r?\n/);
 
@@ -725,7 +725,7 @@ export function parseExam(rawText) {
  * @param {number} seed Số nguyên 32-bit
  * @returns {Function} Hàm trả về số thực trong khoảng [0, 1)
  */
-export function createRNG(seed) {
+function createRNG(seed) {
   let s = Math.floor(seed) >>> 0;
   return function() {
     let t = (s += 0x6D2B79F5) >>> 0;
@@ -738,7 +738,7 @@ export function createRNG(seed) {
 /**
  * Tạo số seed nguyên từ chuỗi (mã đề + chuỗi muối)
  */
-export function hashStringToSeed(str) {
+function hashStringToSeed(str) {
   let hash = 2166136261;
   for (let i = 0; i < str.length; i++) {
     hash ^= str.charCodeAt(i);
@@ -753,7 +753,7 @@ export function hashStringToSeed(str) {
  * @param {Function} rng
  * @returns {Array} Mảng mới đã được hoán vị
  */
-export function shufflePreservingFixed(array, rng) {
+function shufflePreservingFixed(array, rng) {
   const n = array.length;
   if (n <= 1) return [...array];
 
@@ -791,7 +791,7 @@ export function shufflePreservingFixed(array, rng) {
  * @param {number} index Thứ tự hiển thị (0 -> A, 1 -> B...)
  * @param {string} style 'ABCD' | 'abcd' | '1234'
  */
-export function getAnswerLabel(index, style = 'ABCD') {
+function getAnswerLabel(index, style = 'ABCD') {
   if (style === 'ABCD_paren') {
     const char = String.fromCharCode(65 + (index % 26)); // A, B, C, D...
     return {
@@ -831,7 +831,7 @@ export function getAnswerLabel(index, style = 'ABCD') {
  * @param {Object} options Tùy chọn cấu hình trộn
  * @returns {Object} Cấu trúc đề thi đã hoán vị kèm nhãn
  */
-export function shuffleExamForCode(parsedExam, examCode, options = {}) {
+function shuffleExamForCode(parsedExam, examCode, options = {}) {
   const {
     shuffleGroups = false,
     defaultLabelStyle = 'ABCD',
@@ -947,7 +947,7 @@ function getExamFingerprint(shuffledExam) {
  * @param {Object} options
  * @returns {Array<Object>} Danh sách các đề thi đã hoán vị
  */
-export function shuffleAllExams(parsedExam, examCodes, options = {}) {
+function shuffleAllExams(parsedExam, examCodes, options = {}) {
   const result = [];
   const seenFingerprints = new Set();
 
@@ -1004,7 +1004,7 @@ function getDocx() {
  * @param {Object} headerInfo Thông tin đầu đề (7 ô nhập)
  * @returns {Promise<Blob>}
  */
-export async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
+async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
   const docx = getDocx();
   if (!docx) {
     throw new Error('Thư viện docx chưa được nạp!');
@@ -1477,7 +1477,7 @@ function getDocx() {
  * @param {Object} q Câu hỏi đã hoán vị
  * @returns {string} Chuỗi hiển thị đáp án
  */
-export function extractQuestionAnswerKey(q) {
+function extractQuestionAnswerKey(q) {
   const correctAnswers = q.answers.filter(a => a.correct);
 
   // 1. Câu trả lời ngắn (chỉ có 1 __D__ và không có __S__)
@@ -1504,7 +1504,7 @@ export function extractQuestionAnswerKey(q) {
  * @param {Array<Object>} allShuffledExams Danh sách tất cả các mã đề thi đã hoán vị
  * @returns {Object} { headers: Array<string>, rows: Array<Object> }
  */
-export function buildAnswerMatrix(allShuffledExams) {
+function buildAnswerMatrix(allShuffledExams) {
   if (!allShuffledExams || allShuffledExams.length === 0) {
     return { headers: [], rows: [] };
   }
@@ -1540,7 +1540,7 @@ export function buildAnswerMatrix(allShuffledExams) {
  * @param {Object} headerInfo
  * @returns {Promise<Blob>}
  */
-export async function createAnswerKeyDocxBlob(allShuffledExams, headerInfo = {}) {
+async function createAnswerKeyDocxBlob(allShuffledExams, headerInfo = {}) {
   const docx = getDocx();
   if (!docx) {
     throw new Error('Thư viện docx chưa được nạp!');
@@ -1783,14 +1783,13 @@ export async function createAnswerKeyDocxBlob(allShuffledExams, headerInfo = {})
  * hiển thị xem trước trực quan và xử lý xuất file DOCX / ZIP.
  */
 
-import { readExamDocx } from './docx-importer.js';
-import { parseExam } from './parser.js';
-import { shuffleAllExams } from './shuffler.js';
-import { createExamDocxBlob } from './docx-builder.js';
-import { createAnswerKeyDocxBlob, buildAnswerMatrix } from './answer-key.js';
+
+
+
+
 
 // Trạng thái ứng dụng
-export const state = {
+const state = {
   rawText: '',
   fileName: '',
   fileSize: 0,
@@ -1802,7 +1801,7 @@ export const state = {
 };
 
 // Hàm hiển thị thông báo Snackbar
-export function showSnackbar(message, duration = 3000) {
+function showSnackbar(message, duration = 3000) {
   const snackbar = document.getElementById('snackbar');
   if (!snackbar) return;
   snackbar.textContent = message;
@@ -1824,7 +1823,7 @@ function formatBytes(bytes) {
 /**
  * Cập nhật danh sách mã đề hiển thị theo số lượng đề hoặc mã bắt đầu
  */
-export function updateExamCodes(count, startCode) {
+function updateExamCodes(count, startCode) {
   const numericStart = parseInt(startCode, 10) || 101;
   const newCodes = [];
 
@@ -1890,7 +1889,7 @@ function renderExamCodesChips() {
 /**
  * Hiển thị xem trước cấu trúc đề thi
  */
-export function renderExamPreview(parsedExam) {
+function renderExamPreview(parsedExam) {
   const container = document.getElementById('previewQuestionsContainer');
   if (!container) return;
 
@@ -1930,7 +1929,7 @@ export function renderExamPreview(parsedExam) {
         const ratio = (w / h).toFixed(2);
         return `<span class="exam-img-frame" title="Hình ảnh từ file Word gốc: ${w} × ${h} px (Tỉ lệ: ${ratio})">` +
           `<img src="${img.dataUrl}" alt="Hình ảnh đề thi" class="exam-preview-img" ` +
-          `style="width: ${w}px; aspect-ratio: ${w} / ${h};" ` +
+          `style="width: ${w}px; max-width: 100%; aspect-ratio: ${w} / ${h};" ` +
           `data-width="${w}" data-height="${h}" data-img-id="${id}" loading="lazy" />` +
           `</span>`;
       }
@@ -2038,7 +2037,7 @@ function escapeHtml(str) {
 /**
  * Xử lý khi nạp file Word thành công
  */
-export async function handleFileLoaded(file) {
+async function handleFileLoaded(file) {
   try {
     showSnackbar('Đang đọc và phân tích file Word...');
     const result = await readExamDocx(file);
@@ -2110,7 +2109,7 @@ export async function handleFileLoaded(file) {
 /**
  * Lấy các thông số cấu hình đầu đề từ giao diện
  */
-export function getHeaderConfig() {
+function getHeaderConfig() {
   return {
     soGD: document.getElementById('inpSoGD').value.trim() || 'SỞ GD&ĐT TP HCM',
     truong: document.getElementById('inpTruong').value.trim() || 'TRƯỜNG THPT NGUYỄN HỮU HUÂN',
@@ -2124,7 +2123,7 @@ export function getHeaderConfig() {
 /**
  * Lấy các tùy chọn trộn đề
  */
-export function getMixingOptions() {
+function getMixingOptions() {
   const radioNumbering = document.querySelector('input[name="radioNumbering"]:checked');
   const numberingFormat = radioNumbering ? radioNumbering.value : 'dot';
   const startQNum = parseInt(document.getElementById('inpStartQNum').value, 10) || 1;
@@ -2142,7 +2141,7 @@ export function getMixingOptions() {
 /**
  * Thực hiện Trộn & Tạo các file Word DOCX và ZIP
  */
-export async function executeMixAndExport() {
+async function executeMixAndExport() {
   if (!state.parsedExam || !state.parsedExam.valid) {
     showSnackbar('Vui lòng nạp file đề Word hợp lệ trước khi trộn!');
     return;
@@ -2286,7 +2285,7 @@ function renderDownloadFileList() {
 /**
  * Tải toàn bộ file ZIP
  */
-export function downloadAllZip() {
+function downloadAllZip() {
   if (!state.generatedZipBlob) return;
   const headerInfo = getHeaderConfig();
   const zipName = `Bo_De_Thi_${headerInfo.mon.replace(/\s+/g, '_')}_${state.examCodes.length}_MaDe.zip`;
@@ -2308,15 +2307,6 @@ export function downloadAllZip() {
  * Khởi tạo ứng dụng, lắng nghe sự kiện, đăng ký Service Worker PWA
  */
 
-import {
-  state,
-  updateExamCodes,
-  handleFileLoaded,
-  renderExamPreview,
-  executeMixAndExport,
-  downloadAllZip,
-  showSnackbar
-} from './ui.js';
 
 let deferredInstallPrompt = null;
 

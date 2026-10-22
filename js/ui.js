@@ -151,7 +151,7 @@ export function renderExamPreview(parsedExam) {
         const ratio = (w / h).toFixed(2);
         return `<span class="exam-img-frame" title="Hình ảnh từ file Word gốc: ${w} × ${h} px (Tỉ lệ: ${ratio})">` +
           `<img src="${img.dataUrl}" alt="Hình ảnh đề thi" class="exam-preview-img" ` +
-          `style="width: ${w}px; aspect-ratio: ${w} / ${h};" ` +
+          `style="width: ${w}px; max-width: 100%; aspect-ratio: ${w} / ${h};" ` +
           `data-width="${w}" data-height="${h}" data-img-id="${id}" loading="lazy" />` +
           `</span>`;
       }
