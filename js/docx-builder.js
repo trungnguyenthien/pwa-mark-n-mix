@@ -94,7 +94,7 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
                   new TextRun({
                     text: (soGD || '').toUpperCase(),
                     bold: true,
-                    color: COLOR_RED,
+                    color: COLOR_BLACK,
                     font: FONT_FAMILY,
                     size: 24 // 12pt
                   })
@@ -107,7 +107,7 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
                   new TextRun({
                     text: (truong || '').toUpperCase(),
                     bold: true,
-                    color: COLOR_RED,
+                    color: COLOR_BLACK,
                     font: FONT_FAMILY,
                     size: 24
                   })
@@ -151,7 +151,7 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
             ]
           }),
 
-          // Cột phải: Kì kiểm tra (đỏ, đậm); Năm học; Môn; Thời gian làm bài; "(không kể thời gian phát đề)"
+          // Cột phải: Kì kiểm tra (đen, đậm); Năm học; Môn; Thời gian làm bài; "(không kể thời gian phát đề)"
           new TableCell({
             width: { size: 50, type: WidthType.PERCENTAGE },
             borders: {
@@ -168,7 +168,7 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
                   new TextRun({
                     text: (kiKiemTra || '').toUpperCase(),
                     bold: true,
-                    color: COLOR_RED,
+                    color: COLOR_BLACK,
                     font: FONT_FAMILY,
                     size: 24
                   })
@@ -188,7 +188,7 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
                   new TextRun({
                     text: (namHoc || '').trim(),
                     bold: true,
-                    color: COLOR_RED,
+                    color: COLOR_BLACK,
                     font: FONT_FAMILY,
                     size: 22
                   })
@@ -208,7 +208,7 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
                   new TextRun({
                     text: (mon || '').toUpperCase(),
                     bold: true,
-                    color: COLOR_RED,
+                    color: COLOR_BLACK,
                     font: FONT_FAMILY,
                     size: 24
                   })
@@ -228,7 +228,7 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
                   new TextRun({
                     text: (thoiGian || '').trim(),
                     bold: true,
-                    color: COLOR_RED,
+                    color: COLOR_BLACK,
                     font: FONT_FAMILY,
                     size: 22
                   })
@@ -285,7 +285,7 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
       new TextRun({
         text: String(examCode),
         bold: true,
-        color: COLOR_RED,
+        color: COLOR_BLACK,
         font: FONT_FAMILY,
         size: 24
       })

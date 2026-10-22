@@ -141,7 +141,7 @@ export async function createAnswerKeyDocxBlob(allShuffledExams, headerInfo = {})
         new TextRun({
           text: `BẢNG ĐÁP ÁN ${kiKiemTra.toUpperCase()} - NĂM HỌC ${namHoc}`,
           bold: true,
-          color: 'FF0000',
+          color: '000000',
           font: FONT_FAMILY,
           size: 26
         })
@@ -214,7 +214,7 @@ export async function createAnswerKeyDocxBlob(allShuffledExams, headerInfo = {})
               new TextRun({
                 text: `Mã ${code}`,
                 bold: true,
-                color: 'FF0000',
+                color: '000000',
                 font: FONT_FAMILY,
                 size: 22
               })
