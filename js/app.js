@@ -361,4 +361,48 @@ function initEventListeners() {
       }
     });
   }
+
+  // Image Lightbox xem phóng to và kiểm tra thông số ảnh
+  const imageLightboxModal = document.getElementById('imageLightboxModal');
+  const btnCloseLightbox = document.getElementById('btnCloseLightbox');
+  const lightboxImg = document.getElementById('lightboxImg');
+  const lightboxMeta = document.getElementById('lightboxMeta');
+  const previewContainer = document.getElementById('previewQuestionsContainer');
+
+  if (previewContainer && imageLightboxModal) {
+    previewContainer.addEventListener('click', (e) => {
+      const imgTarget = e.target.closest('.exam-preview-img');
+      if (imgTarget && lightboxImg) {
+        const w = imgTarget.getAttribute('data-width') || imgTarget.naturalWidth;
+        const h = imgTarget.getAttribute('data-height') || imgTarget.naturalHeight;
+        const natW = imgTarget.naturalWidth;
+        const natH = imgTarget.naturalHeight;
+        const ratio = (w && h) ? (w / h).toFixed(2) : '1.00';
+
+        lightboxImg.src = imgTarget.src;
+        if (lightboxMeta) {
+          lightboxMeta.textContent = `Frame hiển thị Word: ${w} × ${h} px • Tỉ lệ: ${ratio} • Độ phân giải ảnh: ${natW} × ${natH} px`;
+        }
+        imageLightboxModal.classList.add('active');
+      }
+    });
+
+    if (btnCloseLightbox) {
+      btnCloseLightbox.addEventListener('click', () => {
+        imageLightboxModal.classList.remove('active');
+      });
+    }
+
+    imageLightboxModal.addEventListener('click', (e) => {
+      if (e.target === imageLightboxModal) {
+        imageLightboxModal.classList.remove('active');
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && imageLightboxModal.classList.contains('active')) {
+        imageLightboxModal.classList.remove('active');
+      }
+    });
+  }
 }

@@ -72,14 +72,38 @@ export async function extractTextFromDocx(file) {
             const mime = ext === 'jpg' ? 'image/jpeg' : `image/${ext}`;
             const dataUrl = `data:${mime};base64,${base64}`;
 
+            let naturalWidth = 0;
+            let naturalHeight = 0;
+            if (ext === 'png' && uint8.length >= 24) {
+              naturalWidth = (uint8[16] << 24) | (uint8[17] << 16) | (uint8[18] << 8) | uint8[19];
+              naturalHeight = (uint8[20] << 24) | (uint8[21] << 16) | (uint8[22] << 8) | uint8[23];
+            } else if ((ext === 'jpg' || ext === 'jpeg') && uint8.length >= 4) {
+              let offset = 2;
+              while (offset < uint8.length - 8) {
+                if (uint8[offset] === 0xFF && (uint8[offset + 1] >= 0xC0 && uint8[offset + 1] <= 0xC3)) {
+                  naturalHeight = (uint8[offset + 5] << 8) | uint8[offset + 6];
+                  naturalWidth = (uint8[offset + 7] << 8) | uint8[offset + 8];
+                  break;
+                }
+                const segLen = (uint8[offset + 2] << 8) | uint8[offset + 3];
+                if (segLen <= 0) break;
+                offset += 2 + segLen;
+              }
+            } else if (ext === 'gif' && uint8.length >= 10) {
+              naturalWidth = uint8[6] | (uint8[7] << 8);
+              naturalHeight = uint8[8] | (uint8[9] << 8);
+            }
+
             imageMap[rId] = {
               id: rId,
               path: target,
               mime,
               dataUrl,
               buffer: uint8,
-              width: 180,
-              height: 100
+              naturalWidth: naturalWidth || 180,
+              naturalHeight: naturalHeight || 100,
+              width: naturalWidth || 180,
+              height: naturalHeight || 100
             };
           }
         }
@@ -93,31 +117,93 @@ export async function extractTextFromDocx(file) {
   const pRegex = /<w:p(?:\s[^>]*)?>([\s\S]*?)<\/w:p>/g;
   const lines = [];
   let pMatch;
+  let imgCounter = 0;
 
   while ((pMatch = pRegex.exec(xmlText)) !== null) {
     let pContent = pMatch[1];
 
-    // Trích xuất hình ảnh DrawingML (<w:drawing>) và thay thế bằng token [IMG:rId]
+    // Trích xuất hình ảnh DrawingML (<w:drawing>) và thay thế bằng token [IMG:instanceId]
     pContent = pContent.replace(/<w:drawing[\s\S]*?<\/w:drawing>/gi, (drawingXml) => {
       const blipMatch = drawingXml.match(/r:(?:embed|link)="([^"]+)"/i);
       if (blipMatch) {
         const rId = blipMatch[1];
-        const extMatch = drawingXml.match(/<wp:extent\s+cx="(\d+)"\s+cy="(\d+)"/i);
-        if (extMatch && imageMap[rId]) {
-          imageMap[rId].width = Math.round(parseInt(extMatch[1], 10) / 9525);
-          imageMap[rId].height = Math.round(parseInt(extMatch[2], 10) / 9525);
+        const extMatch = drawingXml.match(/<wp:extent\s+cx="(\d+)"\s+cy="(\d+)"/i) || drawingXml.match(/<a:ext\s+cx="(\d+)"\s+cy="(\d+)"/i);
+        let w = 0, h = 0;
+        if (extMatch) {
+          w = Math.round(parseInt(extMatch[1], 10) / 9525);
+          h = Math.round(parseInt(extMatch[2], 10) / 9525);
         }
-        return ` [IMG:${rId}] `;
+
+        imgCounter++;
+        const instanceId = `img_${imgCounter}`;
+        if (imageMap[rId]) {
+          const baseImg = imageMap[rId];
+          const finalW = w || baseImg.width || 180;
+          const finalH = h || baseImg.height || 100;
+          imageMap[instanceId] = {
+            ...baseImg,
+            id: instanceId,
+            width: finalW,
+            height: finalH,
+            originalRId: rId
+          };
+          if (!imageMap[rId].width || w) {
+            imageMap[rId].width = finalW;
+            imageMap[rId].height = finalH;
+          }
+        }
+        return ` [IMG:${instanceId}] `;
       }
       return '';
     });
 
-    // Trích xuất hình ảnh VML (<w:pict>) và thay thế bằng token [IMG:rId]
+    // Trích xuất hình ảnh VML (<w:pict>) và thay thế bằng token [IMG:instanceId]
     pContent = pContent.replace(/<w:pict[\s\S]*?<\/w:pict>/gi, (pictXml) => {
       const idMatch = pictXml.match(/r:id="([^"]+)"/i);
       if (idMatch) {
         const rId = idMatch[1];
-        return ` [IMG:${rId}] `;
+        let w = 0, h = 0;
+        const styleMatch = pictXml.match(/style="([^"]+)"/i);
+        if (styleMatch) {
+          const wMatch = styleMatch[1].match(/width:\s*([\d.]+)(pt|px|in|cm)?/i);
+          const hMatch = styleMatch[1].match(/height:\s*([\d.]+)(pt|px|in|cm)?/i);
+          if (wMatch) {
+            const val = parseFloat(wMatch[1]);
+            const unit = (wMatch[2] || 'pt').toLowerCase();
+            if (unit === 'pt') w = Math.round(val * 96 / 72);
+            else if (unit === 'in') w = Math.round(val * 96);
+            else if (unit === 'cm') w = Math.round(val / 2.54 * 96);
+            else w = Math.round(val);
+          }
+          if (hMatch) {
+            const val = parseFloat(hMatch[1]);
+            const unit = (hMatch[2] || 'pt').toLowerCase();
+            if (unit === 'pt') h = Math.round(val * 96 / 72);
+            else if (unit === 'in') h = Math.round(val * 96);
+            else if (unit === 'cm') h = Math.round(val / 2.54 * 96);
+            else h = Math.round(val);
+          }
+        }
+
+        imgCounter++;
+        const instanceId = `img_${imgCounter}`;
+        if (imageMap[rId]) {
+          const baseImg = imageMap[rId];
+          const finalW = w || baseImg.width || 180;
+          const finalH = h || baseImg.height || 100;
+          imageMap[instanceId] = {
+            ...baseImg,
+            id: instanceId,
+            width: finalW,
+            height: finalH,
+            originalRId: rId
+          };
+          if (!imageMap[rId].width || w) {
+            imageMap[rId].width = finalW;
+            imageMap[rId].height = finalH;
+          }
+        }
+        return ` [IMG:${instanceId}] `;
       }
       return '';
     });

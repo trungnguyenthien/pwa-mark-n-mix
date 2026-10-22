@@ -129,16 +129,22 @@ export function renderExamPreview(parsedExam) {
   let questionCounter = 0;
   const imageMap = parsedExam.imageMap || state.imageMap || {};
 
-  function renderFormattedContent(text, isInline = false) {
+  function renderFormattedContent(text) {
     if (!text) return '';
     const safe = escapeHtml(text);
-    return safe.replace(/\[IMG:([^\]]+)\]/g, (match, id) => {
+    // Giữ các dấu xuống hàng tự nhiên
+    const withBreaks = safe.replace(/\n/g, '<br/>');
+    return withBreaks.replace(/\[IMG:([^\]]+)\]/g, (match, id) => {
       const img = imageMap[id];
       if (img && img.dataUrl) {
-        if (isInline) {
-          return `<img src="${img.dataUrl}" alt="Hình ảnh đáp án" class="exam-preview-img-inline" style="max-height: 80px; max-width: 180px; display: inline-block; vertical-align: middle; margin: 2px 6px; border-radius: 4px; border: 1px solid var(--border-medium); background: #ffffff;" />`;
-        }
-        return `<div class="exam-img-box" style="margin: 8px 0;"><img src="${img.dataUrl}" alt="Hình ảnh câu hỏi" class="exam-preview-img" style="max-width: 100%; max-height: 240px; display: inline-block; border-radius: 6px; border: 1px solid var(--border-medium); background: #ffffff;" /></div>`;
+        const w = img.width || 180;
+        const h = img.height || 100;
+        const ratio = (w / h).toFixed(2);
+        return `<span class="exam-img-frame" title="Hình ảnh từ file Word gốc: ${w} × ${h} px (Tỉ lệ: ${ratio})">` +
+          `<img src="${img.dataUrl}" alt="Hình ảnh đề thi" class="exam-preview-img" ` +
+          `style="width: ${w}px; aspect-ratio: ${w} / ${h};" ` +
+          `data-width="${w}" data-height="${h}" data-img-id="${id}" loading="lazy" />` +
+          `</span>`;
       }
       return '';
     });
@@ -175,7 +181,7 @@ export function renderExamPreview(parsedExam) {
         <div class="question-card">
           <div class="question-title-line">
             <span class="question-qnum">Câu ${questionCounter}.</span>
-            <span>${renderFormattedContent(q.text, false)}</span>
+            <span>${renderFormattedContent(q.text)}</span>
           </div>
           <div class="answers-grid">
       `;
@@ -184,7 +190,7 @@ export function renderExamPreview(parsedExam) {
         html += `
           <div class="answer-item">
             <span class="ans-pill d">Trả lời ngắn</span>
-            <span class="answer-text"><strong>Đáp án:</strong> ${renderFormattedContent(q.answers[0].text, true)}</span>
+            <span class="answer-text"><strong>Đáp án:</strong> ${renderFormattedContent(q.answers[0].text)}</span>
           </div>
         `;
       } else {
@@ -199,7 +205,7 @@ export function renderExamPreview(parsedExam) {
                 ${isD ? '__D__' : '__S__'}
                 ${isFixed ? ' <span class="lock-icon" title="Cố định vị trí (#)">🔒#</span>' : ''}
               </span>
-              <span class="answer-text"><strong>${labelTemp}.</strong> ${renderFormattedContent(ans.text, true)}</span>
+              <span class="answer-text"><strong>${labelTemp}.</strong> ${renderFormattedContent(ans.text)}</span>
             </div>
           `;
         });

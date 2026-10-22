@@ -312,11 +312,26 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
           const imgId = imgMatch[1];
           const imgInfo = imageMap[imgId];
           if (imgInfo && imgInfo.buffer) {
+            let w = imgInfo.width || 180;
+            let h = imgInfo.height || 100;
+            const MAX_DOCX_WIDTH = 500;
+            const MAX_DOCX_HEIGHT = 450;
+            if (w > MAX_DOCX_WIDTH) {
+              const scale = MAX_DOCX_WIDTH / w;
+              w = MAX_DOCX_WIDTH;
+              h = Math.max(10, Math.round(h * scale));
+            }
+            if (h > MAX_DOCX_HEIGHT) {
+              const scale = MAX_DOCX_HEIGHT / h;
+              h = MAX_DOCX_HEIGHT;
+              w = Math.max(10, Math.round(w * scale));
+            }
+
             targetRuns.push(new ImageRun({
               data: imgInfo.buffer,
               transformation: {
-                width: Math.min(imgInfo.width || 180, 480),
-                height: Math.min(imgInfo.height || 100, 320)
+                width: w,
+                height: h
               }
             }));
           }

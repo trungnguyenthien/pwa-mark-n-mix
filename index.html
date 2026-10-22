@@ -510,6 +510,27 @@
       </div>
     </div>
 
+    <!-- HỘP THOẠI XEM ẢNH PHÓNG TO (IMAGE LIGHTBOX) -->
+    <div id="imageLightboxModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="lightboxTitle">
+      <div class="modal-panel modal-panel-img">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <h3 class="modal-title" id="lightboxTitle">Chi Tiết Hình Ảnh Đề Thi</h3>
+            <p class="modal-subtitle" id="lightboxMeta">Frame hiển thị và kích thước độ phân giải gốc</p>
+          </div>
+          <button id="btnCloseLightbox" class="btn-icon" aria-label="Đóng xem ảnh">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body modal-body-img">
+          <img id="lightboxImg" src="" alt="Chi tiết hình ảnh đề thi" class="lightbox-img-full" />
+        </div>
+      </div>
+    </div>
+
     <!-- Toast / Snackbar thông báo -->
     <div id="snackbar" class="snackbar" role="status" aria-live="polite"></div>
   </div>

@@ -1036,7 +1036,7 @@ input:checked + .slider::before {
 
 .answer-item {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   gap: 8px;
   font-size: 0.875rem;
   line-height: 1.4;
@@ -1051,6 +1051,7 @@ input:checked + .slider::before {
   font-size: 0.75rem;
   font-weight: 700;
   flex-shrink: 0;
+  margin-top: 1px;
 }
 
 .ans-pill.d {
@@ -1071,6 +1072,63 @@ input:checked + .slider::before {
 
 .answer-text {
   color: var(--text-primary);
+  flex: 1;
+  word-break: break-word;
+}
+
+/* ==========================================================================
+   Exam Image Display (Bảo toàn chuẩn Frame & Tỉ lệ từ file Word gốc)
+   ========================================================================== */
+.exam-img-frame {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  vertical-align: middle;
+  margin: 4px 6px;
+}
+
+.exam-preview-img {
+  display: inline-block;
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm, 6px);
+  border: 1px solid var(--border-medium);
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+  cursor: zoom-in;
+}
+
+.exam-preview-img:hover {
+  transform: translateY(-1px);
+  border-color: var(--primary);
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.22);
+}
+
+/* Modal Phóng to chi tiết ảnh (Image Lightbox) */
+.modal-panel-img {
+  max-width: 720px;
+  background: var(--bg-surface);
+}
+
+.modal-body-img {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #090d16;
+  border-radius: var(--radius-sm);
+  overflow: auto;
+}
+
+.lightbox-img-full {
+  max-width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: 4px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  background: #ffffff;
 }
 
 /* ==========================================================================
