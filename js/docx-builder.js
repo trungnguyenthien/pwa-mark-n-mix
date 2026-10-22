@@ -37,6 +37,7 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
     Document,
     Paragraph,
     TextRun,
+    ImageRun,
     Table,
     TableRow,
     TableCell,
@@ -292,6 +293,43 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
 
   // 3. Nội dung phần thân đề (Danh sách câu hỏi & đáp án)
   const contentParagraphs = [];
+  const imageMap = shuffledExam.imageMap || headerInfo.imageMap || {};
+
+  // Hàm hỗ trợ tách văn bản và chèn ImageRun cho các token [IMG:rId]
+  function appendContentRuns(targetRuns, text) {
+    const lines = (text || '').split('\n');
+    lines.forEach((line, lIdx) => {
+      if (lIdx > 0) {
+        targetRuns.push(new TextRun({ break: 1 }));
+      }
+
+      // Phân tách dòng thành các đoạn chữ và token ảnh [IMG:rId]
+      const parts = line.split(/(\[IMG:[^\]]+\])/g);
+      for (const part of parts) {
+        if (!part) continue;
+        const imgMatch = part.match(/^\[IMG:([^\]]+)\]$/);
+        if (imgMatch) {
+          const imgId = imgMatch[1];
+          const imgInfo = imageMap[imgId];
+          if (imgInfo && imgInfo.buffer) {
+            targetRuns.push(new ImageRun({
+              data: imgInfo.buffer,
+              transformation: {
+                width: Math.min(imgInfo.width || 180, 480),
+                height: Math.min(imgInfo.height || 100, 320)
+              }
+            }));
+          }
+        } else {
+          targetRuns.push(new TextRun({
+            text: part,
+            font: FONT_FAMILY,
+            size: 24
+          }));
+        }
+      }
+    });
+  }
 
   for (const q of shuffledExam.flatQuestions) {
     // Đoạn câu hỏi
@@ -304,18 +342,7 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
       })
     ];
 
-    // Xử lý nội dung câu hỏi (có thể có nhiều dòng)
-    const qLines = (q.text || '').split('\n');
-    qLines.forEach((line, lIdx) => {
-      if (lIdx > 0) {
-        questionRuns.push(new TextRun({ break: 1 }));
-      }
-      questionRuns.push(new TextRun({
-        text: line,
-        font: FONT_FAMILY,
-        size: 24
-      }));
-    });
+    appendContentRuns(questionRuns, q.text);
 
     contentParagraphs.push(new Paragraph({
       spacing: { before: 120, after: 60 },
@@ -334,17 +361,7 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
           })
         ];
 
-        const aLines = (ans.text || '').split('\n');
-        aLines.forEach((aLine, aIdx) => {
-          if (aIdx > 0) {
-            answerRuns.push(new TextRun({ break: 1 }));
-          }
-          answerRuns.push(new TextRun({
-            text: aLine,
-            font: FONT_FAMILY,
-            size: 24
-          }));
-        });
+        appendContentRuns(answerRuns, ans.text);
 
         contentParagraphs.push(new Paragraph({
           indent: { left: 400 }, // Thụt đầu dòng cho các phương án đáp án

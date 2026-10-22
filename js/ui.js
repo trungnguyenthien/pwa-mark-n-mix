@@ -15,6 +15,7 @@ export const state = {
   rawText: '',
   fileName: '',
   fileSize: 0,
+  imageMap: {},
   parsedExam: null,
   examCodes: ['101', '102', '103', '104'],
   generatedZipBlob: null,
@@ -126,6 +127,22 @@ export function renderExamPreview(parsedExam) {
 
   let html = '';
   let questionCounter = 0;
+  const imageMap = parsedExam.imageMap || state.imageMap || {};
+
+  function renderFormattedContent(text, isInline = false) {
+    if (!text) return '';
+    const safe = escapeHtml(text);
+    return safe.replace(/\[IMG:([^\]]+)\]/g, (match, id) => {
+      const img = imageMap[id];
+      if (img && img.dataUrl) {
+        if (isInline) {
+          return `<img src="${img.dataUrl}" alt="Hình ảnh đáp án" class="exam-preview-img-inline" style="max-height: 80px; max-width: 180px; display: inline-block; vertical-align: middle; margin: 2px 6px; border-radius: 4px; border: 1px solid var(--border-medium); background: #ffffff;" />`;
+        }
+        return `<div class="exam-img-box" style="margin: 8px 0;"><img src="${img.dataUrl}" alt="Hình ảnh câu hỏi" class="exam-preview-img" style="max-width: 100%; max-height: 240px; display: inline-block; border-radius: 6px; border: 1px solid var(--border-medium); background: #ffffff;" /></div>`;
+      }
+      return '';
+    });
+  }
 
   parsedExam.groups.forEach((group, gIdx) => {
     const modeBadge = group.mode || 'G';
@@ -158,7 +175,7 @@ export function renderExamPreview(parsedExam) {
         <div class="question-card">
           <div class="question-title-line">
             <span class="question-qnum">Câu ${questionCounter}.</span>
-            <span>${escapeHtml(q.text)}</span>
+            <span>${renderFormattedContent(q.text, false)}</span>
           </div>
           <div class="answers-grid">
       `;
@@ -167,7 +184,7 @@ export function renderExamPreview(parsedExam) {
         html += `
           <div class="answer-item">
             <span class="ans-pill d">Trả lời ngắn</span>
-            <span class="answer-text"><strong>Đáp án:</strong> ${escapeHtml(q.answers[0].text)}</span>
+            <span class="answer-text"><strong>Đáp án:</strong> ${renderFormattedContent(q.answers[0].text, true)}</span>
           </div>
         `;
       } else {
@@ -182,7 +199,7 @@ export function renderExamPreview(parsedExam) {
                 ${isD ? '__D__' : '__S__'}
                 ${isFixed ? ' <span class="lock-icon" title="Cố định vị trí (#)">🔒#</span>' : ''}
               </span>
-              <span class="answer-text"><strong>${labelTemp}.</strong> ${escapeHtml(ans.text)}</span>
+              <span class="answer-text"><strong>${labelTemp}.</strong> ${renderFormattedContent(ans.text, true)}</span>
             </div>
           `;
         });
@@ -224,6 +241,7 @@ export async function handleFileLoaded(file) {
     state.rawText = result.text;
     state.fileName = result.fileName;
     state.fileSize = result.fileSize;
+    state.imageMap = result.imageMap || {};
 
     // Cập nhật giao diện thông tin file
     document.getElementById('txtFileName').textContent = result.fileName;
@@ -247,6 +265,7 @@ export async function handleFileLoaded(file) {
 
     // Phân tích cú pháp Marker theo tiêu chuẩn Mục 3 & 7
     const parsed = parseExam(result.text);
+    parsed.imageMap = state.imageMap;
     state.parsedExam = parsed;
 
     const errorBanner = document.getElementById('errorBanner');
@@ -335,10 +354,14 @@ export async function executeMixAndExport() {
     `;
 
     const headerInfo = getHeaderConfig();
+    headerInfo.imageMap = state.imageMap || {};
     const mixingOptions = getMixingOptions();
 
     // 1. Hoán vị tất cả các mã đề
     const shuffledExams = shuffleAllExams(state.parsedExam, state.examCodes, mixingOptions);
+    shuffledExams.forEach(exam => {
+      exam.imageMap = state.imageMap || {};
+    });
 
     // 2. Tạo JSZip để đóng gói
     const JSZip = (typeof window !== 'undefined' && window.JSZip) ? window.JSZip : globalThis.JSZip;

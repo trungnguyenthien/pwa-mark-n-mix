@@ -5,6 +5,7 @@
 /**
  * Module Nhập & Trích Xuất File Word (.docx) Đã Đánh Marker
  * - Sử dụng JSZip để đọc và phân tích cấu trúc word/document.xml trực tiếp trên trình duyệt
+ * - Trích xuất và bảo toàn toàn bộ ảnh inline (<w:drawing>, <w:pict>) trong câu hỏi và đáp án
  * - Bảo toàn các dấu ngắt dòng (<w:br/>, <w:cr/>), tab và toàn bộ ký tự tiếng Việt Unicode
  * - Tự động trích xuất thông tin đầu đề (Sở GD, Trường, Kì kiểm tra, Năm học, Môn, Thời gian)
  * - Tách và chuẩn hóa các khối marker (__G__, __QUESTION__, __D__, __S__, ...)
@@ -21,9 +22,9 @@ function getJSZip() {
 }
 
 /**
- * Trích xuất toàn bộ chuỗi văn bản thuần và ngắt dòng từ tệp Word (.docx)
+ * Trích xuất toàn bộ chuỗi văn bản, thẻ ảnh và ngắt dòng từ tệp Word (.docx)
  * @param {Blob|File|ArrayBuffer} file
- * @returns {Promise<string>}
+ * @returns {Promise<{ rawText: string, imageMap: Object }>}
  */
 async function extractTextFromDocx(file) {
   const JSZip = getJSZip();
@@ -46,15 +47,84 @@ async function extractTextFromDocx(file) {
     throw new Error('Tệp không đúng định dạng Word (.docx hợp lệ): thiếu word/document.xml');
   }
 
+  // 1. Phân tích các mối liên kết quan hệ trong word/_rels/document.xml.rels để tìm tệp media (ảnh)
+  const imageMap = {};
+  const relsFile = zip.file('word/_rels/document.xml.rels');
+  if (relsFile) {
+    const relsXml = await relsFile.async('text');
+    const relMatches = [...relsXml.matchAll(/<Relationship\s+([^>]*)\/>/gi)];
+    for (const m of relMatches) {
+      const attrs = m[1];
+      const idMatch = attrs.match(/Id="([^"]+)"/i);
+      const targetMatch = attrs.match(/Target="([^"]+)"/i);
+      const typeMatch = attrs.match(/Type="([^"]+)"/i);
+
+      if (idMatch && targetMatch) {
+        const rId = idMatch[1];
+        let target = targetMatch[1];
+        const isImage = (typeMatch && typeMatch[1].endsWith('/image')) || /\.(png|jpe?g|gif|bmp|webp|svg)$/i.test(target);
+
+        if (isImage) {
+          if (!target.startsWith('word/')) {
+            target = 'word/' + target.replace(/^(\.\.\/)+/, '');
+          }
+          const mediaFile = zip.file(target);
+          if (mediaFile) {
+            const ext = target.split('.').pop().toLowerCase();
+            const base64 = await mediaFile.async('base64');
+            const uint8 = await mediaFile.async('uint8array');
+            const mime = ext === 'jpg' ? 'image/jpeg' : `image/${ext}`;
+            const dataUrl = `data:${mime};base64,${base64}`;
+
+            imageMap[rId] = {
+              id: rId,
+              path: target,
+              mime,
+              dataUrl,
+              buffer: uint8,
+              width: 180,
+              height: 100
+            };
+          }
+        }
+      }
+    }
+  }
+
   const xmlText = await docXmlFile.async('text');
 
-  // Phân tích cú pháp XML của Word, xử lý từng đoạn văn <w:p>
+  // 2. Phân tích cú pháp XML của Word, xử lý từng đoạn văn <w:p>
   const pRegex = /<w:p(?:\s[^>]*)?>([\s\S]*?)<\/w:p>/g;
   const lines = [];
   let pMatch;
 
   while ((pMatch = pRegex.exec(xmlText)) !== null) {
     let pContent = pMatch[1];
+
+    // Trích xuất hình ảnh DrawingML (<w:drawing>) và thay thế bằng token [IMG:rId]
+    pContent = pContent.replace(/<w:drawing[\s\S]*?<\/w:drawing>/gi, (drawingXml) => {
+      const blipMatch = drawingXml.match(/r:(?:embed|link)="([^"]+)"/i);
+      if (blipMatch) {
+        const rId = blipMatch[1];
+        const extMatch = drawingXml.match(/<wp:extent\s+cx="(\d+)"\s+cy="(\d+)"/i);
+        if (extMatch && imageMap[rId]) {
+          imageMap[rId].width = Math.round(parseInt(extMatch[1], 10) / 9525);
+          imageMap[rId].height = Math.round(parseInt(extMatch[2], 10) / 9525);
+        }
+        return ` [IMG:${rId}] `;
+      }
+      return '';
+    });
+
+    // Trích xuất hình ảnh VML (<w:pict>) và thay thế bằng token [IMG:rId]
+    pContent = pContent.replace(/<w:pict[\s\S]*?<\/w:pict>/gi, (pictXml) => {
+      const idMatch = pictXml.match(/r:id="([^"]+)"/i);
+      if (idMatch) {
+        const rId = idMatch[1];
+        return ` [IMG:${rId}] `;
+      }
+      return '';
+    });
 
     // Chuyển đổi các thẻ ngắt dòng và tab
     pContent = pContent.replace(/<w:br(?:\s[^>]*)?\/>/gi, '\n');
@@ -69,20 +139,24 @@ async function extractTextFromDocx(file) {
       .replace(/&quot;/g, '"')
       .replace(/&apos;/g, "'");
 
-    // Trích xuất text từ các thẻ <w:t>, bảo toàn ký tự xuống dòng \n
+    // Trích xuất text từ các thẻ <w:t> và giữ nguyên token ảnh [IMG:...]
     let pText = '';
-    const tokenRegex = /(<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>|\n)/g;
+    const tokenRegex = /(<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>|\n|\[IMG:[^\]]+\])/g;
     let tokMatch;
     while ((tokMatch = tokenRegex.exec(decoded)) !== null) {
       if (tokMatch[0] === '\n') {
         pText += '\n';
+      } else if (tokMatch[0].startsWith('[IMG:')) {
+        pText += ' ' + tokMatch[0] + ' ';
       } else {
         pText += tokMatch[2];
       }
     }
 
-    if (!pText && /<w:t/i.test(decoded)) {
-      pText = decoded.replace(/<[^>]+>/g, '');
+    // Nếu đoạn không có thẻ w:t nhưng có chứa ảnh
+    if (!pText && decoded.includes('[IMG:')) {
+      const m = decoded.match(/\[IMG:[^\]]+\]/g);
+      if (m) pText = m.join(' ');
     }
 
     if (pText.trim()) {
@@ -91,7 +165,10 @@ async function extractTextFromDocx(file) {
   }
 
   const rawExtracted = lines.join('\n');
-  return rawExtracted;
+  return {
+    rawText: rawExtracted,
+    imageMap
+  };
 }
 
 /**
@@ -134,7 +211,6 @@ function normalizeMarkedText(rawText) {
     return false;
   }
 
-  // Nếu file có chứa các marker đề thi (__QUESTION__ hoặc __G__ hoặc __D__)
   const lines = rawText.split(/\r?\n/);
   const cleanedLines = [];
   let foundFirstMarker = false;
@@ -155,9 +231,8 @@ function normalizeMarkedText(rawText) {
     }
   }
 
-  // Nếu không tìm thấy marker ở đầu (ví dụ các marker viết dính liền trên 1 dòng như ví dụ 3.4)
+  // Nếu không tìm thấy marker ở đầu (ví dụ các marker viết dính liền trên 1 dòng)
   if (cleanedLines.length === 0 && rawText.includes('__QUESTION__')) {
-    // Tách các marker bị dính liền: __G____QUESTION__ -> __G__ \n __QUESTION__
     const separated = rawText
       .replace(/(__[A-Za-z0-9#_]+__)/g, '\n$1 ')
       .split('\n')
@@ -178,20 +253,21 @@ function normalizeMarkedText(rawText) {
 /**
  * Đọc file tải lên (.docx)
  * @param {File|Blob} file
- * @returns {Promise<Object>} { text, extractedHeader, fileName, fileSize }
+ * @returns {Promise<Object>} { text, extractedHeader, fileName, fileSize, imageMap }
  */
 async function readExamDocx(file) {
   const fileName = (file && file.name) ? file.name : 'De_Thi.docx';
   const fileSize = file.size || 0;
 
-  const rawText = await extractTextFromDocx(file);
+  const { rawText, imageMap } = await extractTextFromDocx(file);
   const normalized = normalizeMarkedText(rawText);
 
   return {
     text: normalized.text,
     extractedHeader: normalized.extractedHeader || {},
     fileName,
-    fileSize
+    fileSize,
+    imageMap: imageMap || {}
   };
 }
 
@@ -798,6 +874,7 @@ async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
     Document,
     Paragraph,
     TextRun,
+    ImageRun,
     Table,
     TableRow,
     TableCell,
@@ -1053,6 +1130,43 @@ async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
 
   // 3. Nội dung phần thân đề (Danh sách câu hỏi & đáp án)
   const contentParagraphs = [];
+  const imageMap = shuffledExam.imageMap || headerInfo.imageMap || {};
+
+  // Hàm hỗ trợ tách văn bản và chèn ImageRun cho các token [IMG:rId]
+  function appendContentRuns(targetRuns, text) {
+    const lines = (text || '').split('\n');
+    lines.forEach((line, lIdx) => {
+      if (lIdx > 0) {
+        targetRuns.push(new TextRun({ break: 1 }));
+      }
+
+      // Phân tách dòng thành các đoạn chữ và token ảnh [IMG:rId]
+      const parts = line.split(/(\[IMG:[^\]]+\])/g);
+      for (const part of parts) {
+        if (!part) continue;
+        const imgMatch = part.match(/^\[IMG:([^\]]+)\]$/);
+        if (imgMatch) {
+          const imgId = imgMatch[1];
+          const imgInfo = imageMap[imgId];
+          if (imgInfo && imgInfo.buffer) {
+            targetRuns.push(new ImageRun({
+              data: imgInfo.buffer,
+              transformation: {
+                width: Math.min(imgInfo.width || 180, 480),
+                height: Math.min(imgInfo.height || 100, 320)
+              }
+            }));
+          }
+        } else {
+          targetRuns.push(new TextRun({
+            text: part,
+            font: FONT_FAMILY,
+            size: 24
+          }));
+        }
+      }
+    });
+  }
 
   for (const q of shuffledExam.flatQuestions) {
     // Đoạn câu hỏi
@@ -1065,18 +1179,7 @@ async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
       })
     ];
 
-    // Xử lý nội dung câu hỏi (có thể có nhiều dòng)
-    const qLines = (q.text || '').split('\n');
-    qLines.forEach((line, lIdx) => {
-      if (lIdx > 0) {
-        questionRuns.push(new TextRun({ break: 1 }));
-      }
-      questionRuns.push(new TextRun({
-        text: line,
-        font: FONT_FAMILY,
-        size: 24
-      }));
-    });
+    appendContentRuns(questionRuns, q.text);
 
     contentParagraphs.push(new Paragraph({
       spacing: { before: 120, after: 60 },
@@ -1095,17 +1198,7 @@ async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
           })
         ];
 
-        const aLines = (ans.text || '').split('\n');
-        aLines.forEach((aLine, aIdx) => {
-          if (aIdx > 0) {
-            answerRuns.push(new TextRun({ break: 1 }));
-          }
-          answerRuns.push(new TextRun({
-            text: aLine,
-            font: FONT_FAMILY,
-            size: 24
-          }));
-        });
+        appendContentRuns(answerRuns, ans.text);
 
         contentParagraphs.push(new Paragraph({
           indent: { left: 400 }, // Thụt đầu dòng cho các phương án đáp án
@@ -1512,6 +1605,7 @@ const state = {
   rawText: '',
   fileName: '',
   fileSize: 0,
+  imageMap: {},
   parsedExam: null,
   examCodes: ['101', '102', '103', '104'],
   generatedZipBlob: null,
@@ -1623,6 +1717,22 @@ function renderExamPreview(parsedExam) {
 
   let html = '';
   let questionCounter = 0;
+  const imageMap = parsedExam.imageMap || state.imageMap || {};
+
+  function renderFormattedContent(text, isInline = false) {
+    if (!text) return '';
+    const safe = escapeHtml(text);
+    return safe.replace(/\[IMG:([^\]]+)\]/g, (match, id) => {
+      const img = imageMap[id];
+      if (img && img.dataUrl) {
+        if (isInline) {
+          return `<img src="${img.dataUrl}" alt="Hình ảnh đáp án" class="exam-preview-img-inline" style="max-height: 80px; max-width: 180px; display: inline-block; vertical-align: middle; margin: 2px 6px; border-radius: 4px; border: 1px solid var(--border-medium); background: #ffffff;" />`;
+        }
+        return `<div class="exam-img-box" style="margin: 8px 0;"><img src="${img.dataUrl}" alt="Hình ảnh câu hỏi" class="exam-preview-img" style="max-width: 100%; max-height: 240px; display: inline-block; border-radius: 6px; border: 1px solid var(--border-medium); background: #ffffff;" /></div>`;
+      }
+      return '';
+    });
+  }
 
   parsedExam.groups.forEach((group, gIdx) => {
     const modeBadge = group.mode || 'G';
@@ -1655,7 +1765,7 @@ function renderExamPreview(parsedExam) {
         <div class="question-card">
           <div class="question-title-line">
             <span class="question-qnum">Câu ${questionCounter}.</span>
-            <span>${escapeHtml(q.text)}</span>
+            <span>${renderFormattedContent(q.text, false)}</span>
           </div>
           <div class="answers-grid">
       `;
@@ -1664,7 +1774,7 @@ function renderExamPreview(parsedExam) {
         html += `
           <div class="answer-item">
             <span class="ans-pill d">Trả lời ngắn</span>
-            <span class="answer-text"><strong>Đáp án:</strong> ${escapeHtml(q.answers[0].text)}</span>
+            <span class="answer-text"><strong>Đáp án:</strong> ${renderFormattedContent(q.answers[0].text, true)}</span>
           </div>
         `;
       } else {
@@ -1679,7 +1789,7 @@ function renderExamPreview(parsedExam) {
                 ${isD ? '__D__' : '__S__'}
                 ${isFixed ? ' <span class="lock-icon" title="Cố định vị trí (#)">🔒#</span>' : ''}
               </span>
-              <span class="answer-text"><strong>${labelTemp}.</strong> ${escapeHtml(ans.text)}</span>
+              <span class="answer-text"><strong>${labelTemp}.</strong> ${renderFormattedContent(ans.text, true)}</span>
             </div>
           `;
         });
@@ -1721,6 +1831,7 @@ async function handleFileLoaded(file) {
     state.rawText = result.text;
     state.fileName = result.fileName;
     state.fileSize = result.fileSize;
+    state.imageMap = result.imageMap || {};
 
     // Cập nhật giao diện thông tin file
     document.getElementById('txtFileName').textContent = result.fileName;
@@ -1744,6 +1855,7 @@ async function handleFileLoaded(file) {
 
     // Phân tích cú pháp Marker theo tiêu chuẩn Mục 3 & 7
     const parsed = parseExam(result.text);
+    parsed.imageMap = state.imageMap;
     state.parsedExam = parsed;
 
     const errorBanner = document.getElementById('errorBanner');
@@ -1832,10 +1944,14 @@ async function executeMixAndExport() {
     `;
 
     const headerInfo = getHeaderConfig();
+    headerInfo.imageMap = state.imageMap || {};
     const mixingOptions = getMixingOptions();
 
     // 1. Hoán vị tất cả các mã đề
     const shuffledExams = shuffleAllExams(state.parsedExam, state.examCodes, mixingOptions);
+    shuffledExams.forEach(exam => {
+      exam.imageMap = state.imageMap || {};
+    });
 
     // 2. Tạo JSZip để đóng gói
     const JSZip = (typeof window !== 'undefined' && window.JSZip) ? window.JSZip : globalThis.JSZip;
