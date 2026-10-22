@@ -55,42 +55,44 @@
   --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Light Mode Overrides */
+/* Light Mode Overrides (Chuẩn Microsoft Word 365 Light Theme) */
 [data-theme="light"] {
-  --bg-primary: #f8fafc;
-  --bg-surface: #ffffff;
-  --bg-surface-elevated: #f1f5f9;
-  --bg-surface-hover: #e2e8f0;
-  --bg-input: #ffffff;
+  --bg-primary: #edebe9;         /* Nền canvas xám đặc trưng trang soạn thảo Word */
+  --bg-surface: #ffffff;         /* Nền giấy trắng tinh khiết của tài liệu Word */
+  --bg-surface-elevated: #f8f9fa;/* Nền dải Ribbon & Card */
+  --bg-surface-hover: #e5e5e5;   /* Màu hover trung tính chuẩn Fluent UI */
+  --bg-input: #ffffff;           /* Ô nhập liệu nền trắng */
 
-  --border-subtle: rgba(0, 0, 0, 0.08);
-  --border-medium: rgba(0, 0, 0, 0.14);
-  --border-focus: #4f46e5;
+  --border-subtle: #edebe9;
+  --border-medium: #d2d0ce;      /* Viền xám trang Word chuẩn */
+  --border-focus: #185abd;       /* Xanh dương thương hiệu Microsoft Word */
 
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
+  --text-primary: #201f1e;       /* Màu chữ đen than chuẩn Fluent */
+  --text-secondary: #484644;     /* Màu chữ thứ cấp */
+  --text-muted: #797775;         /* Màu chữ chú thích mờ */
 
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
-  --primary-glow: rgba(79, 70, 229, 0.22);
-  --primary-subtle: rgba(79, 70, 229, 0.08);
+  /* Microsoft Word Brand Blue */
+  --primary: #185abd;            /* Xanh Word 365 */
+  --primary-hover: #104a9e;      /* Xanh Word đậm khi hover */
+  --primary-glow: rgba(24, 90, 189, 0.28);
+  --primary-subtle: rgba(24, 90, 189, 0.08);
 
-  --success: #059669;
-  --success-glow: rgba(5, 150, 105, 0.18);
-  --success-subtle: rgba(5, 150, 105, 0.08);
+  /* Semantic Colors */
+  --success: #107c41;            /* Xanh lá Microsoft Excel/Office */
+  --success-glow: rgba(16, 124, 65, 0.2);
+  --success-subtle: rgba(16, 124, 65, 0.08);
 
-  --danger: #dc2626;
-  --danger-glow: rgba(220, 38, 38, 0.18);
-  --danger-subtle: rgba(220, 38, 38, 0.08);
+  --danger: #a80000;             /* Đỏ mận Microsoft Office */
+  --danger-glow: rgba(168, 0, 0, 0.2);
+  --danger-subtle: rgba(168, 0, 0, 0.08);
 
-  --warning: #d97706;
-  --warning-subtle: rgba(217, 119, 6, 0.08);
+  --warning: #d83b01;            /* Cam Office */
+  --warning-subtle: rgba(216, 59, 1, 0.08);
 
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 12px 30px rgba(0, 0, 0, 0.1);
-  --shadow-glow: 0 0 20px rgba(79, 70, 229, 0.15);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.07);
+  --shadow-md: 0 3px 10px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.05);
+  --shadow-glow: 0 0 18px rgba(24, 90, 189, 0.25);
 }
 
 /* Base Reset */
@@ -141,10 +143,6 @@ body {
   border-bottom: 1px solid var(--border-subtle);
 }
 
-[data-theme="light"] .app-header {
-  background-color: rgba(255, 255, 255, 0.86);
-}
-
 .header-brand {
   display: flex;
   align-items: center;
@@ -170,12 +168,6 @@ body {
   font-weight: 700;
   letter-spacing: -0.02em;
   background: linear-gradient(to right, #ffffff, #cbd5e1);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-[data-theme="light"] .brand-title {
-  background: linear-gradient(to right, #0f172a, #334155);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -1006,24 +998,27 @@ input:checked + .slider::before {
 }
 
 .question-card {
-  padding: 14px;
+  padding: 16px;
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   display: flex;
   flex-direction: column;
   gap: 10px;
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 1rem; /* 12pt */
 }
 
 .question-title-line {
-  font-weight: 600;
-  font-size: 0.9375rem;
+  font-weight: 500;
+  font-size: 1rem;
   color: var(--text-primary);
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
 .question-qnum {
   color: var(--primary);
+  font-weight: 700;
   margin-right: 6px;
 }
 
@@ -1432,3 +1427,343 @@ input:checked + .slider::before {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+/* ==========================================================================
+   Microsoft Word 365 Light Theme System (Giao diện chuẩn Word 365)
+   ========================================================================== */
+[data-theme="light"] body {
+  background-color: #edebe9;
+  background-image: linear-gradient(180deg, #edebe9 0%, #f3f2f1 100%);
+  color: #201f1e;
+}
+
+/* Header dạng thanh Ribbon danh tiếng của Microsoft Word */
+[data-theme="light"] .app-header {
+  background: linear-gradient(135deg, #185abd 0%, #104a9e 100%);
+  border-bottom: 1px solid #0d3c80;
+  box-shadow: 0 2px 10px rgba(16, 74, 158, 0.25);
+}
+
+[data-theme="light"] .brand-logo {
+  background: #ffffff;
+  color: #185abd;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+[data-theme="light"] .brand-title {
+  background: none;
+  -webkit-background-clip: unset;
+  -webkit-text-fill-color: #ffffff;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="light"] .brand-subtitle {
+  color: #d0e2ff;
+}
+
+[data-theme="light"] .net-status-pill {
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  color: #ffffff;
+}
+
+[data-theme="light"] .net-status-pill .status-dot {
+  background-color: #4cd964;
+  box-shadow: 0 0 6px #4cd964;
+}
+
+[data-theme="light"] .btn-icon {
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+}
+
+[data-theme="light"] .btn-icon:hover {
+  background: rgba(255, 255, 255, 0.28);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+[data-theme="light"] .btn-ghost {
+  color: #ffffff;
+}
+
+[data-theme="light"] .btn-ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+/* Các trang tài liệu / Thẻ bước (Mô phỏng tờ giấy Word trên Canvas) */
+[data-theme="light"] .section-card {
+  background: #ffffff;
+  border: 1px solid #d2d0ce;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .section-card:hover {
+  border-color: #a19f9d;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .section-icon {
+  background: #eff6fc;
+  color: #185abd;
+}
+
+/* Dropzone nạp tài liệu */
+[data-theme="light"] .dropzone {
+  background: #faf9f8;
+  border: 2px dashed #185abd;
+}
+
+[data-theme="light"] .dropzone:hover,
+[data-theme="light"] .dropzone.dragover {
+  background: #eff6fc;
+  border-color: #104a9e;
+  box-shadow: 0 6px 20px rgba(24, 90, 189, 0.15);
+}
+
+[data-theme="light"] .dropzone-icon-circle {
+  background: #eff6fc;
+  color: #185abd;
+  box-shadow: 0 4px 14px rgba(24, 90, 189, 0.15);
+}
+
+[data-theme="light"] .loaded-file-card {
+  background: #f8fbf9;
+  border: 1px solid #107c41;
+}
+
+[data-theme="light"] .loaded-file-icon {
+  background: #dff6dd;
+  color: #107c41;
+}
+
+[data-theme="light"] .badge-success {
+  background: #dff6dd;
+  color: #107c41;
+  border-color: #107c41;
+}
+
+/* Form Controls chuẩn Microsoft Fluent UI */
+[data-theme="light"] .form-input,
+[data-theme="light"] .form-select {
+  background: #ffffff;
+  border: 1px solid #8a8886;
+  color: #201f1e;
+}
+
+[data-theme="light"] .form-input:focus,
+[data-theme="light"] .form-select:focus {
+  border-color: #185abd;
+  box-shadow: 0 0 0 2px rgba(24, 90, 189, 0.22);
+}
+
+[data-theme="light"] .stepper-box {
+  background: #ffffff;
+  border-color: #8a8886;
+}
+
+[data-theme="light"] .btn-stepper {
+  color: #201f1e;
+}
+
+[data-theme="light"] .btn-stepper:hover {
+  background: #f3f2f1;
+  color: #185abd;
+}
+
+[data-theme="light"] .stepper-input {
+  color: #201f1e;
+}
+
+[data-theme="light"] .exam-codes-box {
+  background: #faf9f8;
+  border: 1px solid #edebe9;
+}
+
+[data-theme="light"] .code-chip {
+  background: #ffffff;
+  border-color: #c8c6c4;
+  color: #185abd;
+}
+
+[data-theme="light"] .code-chip:hover {
+  background: #eff6fc;
+  border-color: #185abd;
+}
+
+[data-theme="light"] .code-chip-input {
+  background: #ffffff;
+  border-color: #185abd;
+  color: #185abd;
+}
+
+[data-theme="light"] .segmented-control {
+  background: #f3f2f1;
+  border: 1px solid #d2d0ce;
+}
+
+[data-theme="light"] .segment-item input:checked + span {
+  background: #185abd;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(24, 90, 189, 0.25);
+}
+
+[data-theme="light"] .slider {
+  background-color: #c8c6c4;
+  border-color: #a19f9d;
+}
+
+[data-theme="light"] input:checked + .slider {
+  background-color: #185abd;
+  border-color: #185abd;
+}
+
+/* Nút bấm chính sắc xanh Word Blue */
+[data-theme="light"] .btn-primary,
+[data-theme="light"] .btn-mix {
+  background: linear-gradient(135deg, #185abd 0%, #104a9e 100%);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 4px 14px rgba(24, 90, 189, 0.3);
+}
+
+[data-theme="light"] .btn-primary:hover:not(:disabled),
+[data-theme="light"] .btn-mix:hover:not(:disabled) {
+  background: linear-gradient(135deg, #104a9e 0%, #0d3c80 100%);
+  box-shadow: 0 6px 20px rgba(24, 90, 189, 0.4);
+}
+
+[data-theme="light"] .btn-secondary {
+  background: #ffffff;
+  border: 1px solid #8a8886;
+  color: #201f1e;
+}
+
+[data-theme="light"] .btn-secondary:hover:not(:disabled) {
+  background: #f3f2f1;
+  border-color: #323130;
+}
+
+/* Khối xem trước đề thi (Trang văn bản Word) */
+[data-theme="light"] .preview-group-box {
+  background: #ffffff;
+  border: 1px solid #d2d0ce;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .preview-group-header {
+  background: #eff6fc;
+  border-bottom: 1px solid #c7e0f4;
+  color: #104a9e;
+}
+
+[data-theme="light"] .group-mode-pill {
+  background: #185abd;
+  color: #ffffff;
+}
+
+[data-theme="light"] .question-card {
+  background: #ffffff;
+  border: 1px solid #edebe9;
+  border-left: 3px solid #185abd;
+}
+
+[data-theme="light"] .question-card:hover {
+  border-color: #c8c6c4;
+  border-left-color: #104a9e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .question-qnum {
+  color: #185abd;
+}
+
+[data-theme="light"] .ans-pill.d {
+  background: #dff6dd;
+  color: #107c41;
+  border: 1px solid #107c41;
+}
+
+[data-theme="light"] .ans-pill.s {
+  background: #f3f2f1;
+  color: #605e5c;
+  border: 1px solid #d2d0ce;
+}
+
+[data-theme="light"] .raw-view-container {
+  background: #f8f9fa;
+  border: 1px solid #d2d0ce;
+}
+
+[data-theme="light"] .raw-text-pre {
+  color: #323130;
+}
+
+/* Hộp thoại thông báo & tải kết quả (Modal Dialogs) */
+[data-theme="light"] .modal-panel {
+  background: #ffffff;
+  border: 1px solid #d2d0ce;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.16);
+}
+
+[data-theme="light"] .modal-header {
+  background: #faf9f8;
+  border-bottom: 1px solid #edebe9;
+}
+
+[data-theme="light"] .modal-footer {
+  background: #faf9f8;
+  border-top: 1px solid #edebe9;
+}
+
+[data-theme="light"] .modal-success-badge {
+  background: #107c41;
+  box-shadow: 0 0 16px rgba(16, 124, 65, 0.3);
+}
+
+[data-theme="light"] .zip-download-box {
+  background: #eff6fc;
+  border: 1px solid #c7e0f4;
+}
+
+[data-theme="light"] .file-download-item {
+  background: #ffffff;
+  border: 1px solid #edebe9;
+}
+
+[data-theme="light"] .matrix-table th {
+  background: #eff6fc;
+  color: #185abd;
+  border: 1px solid #c7e0f4;
+}
+
+[data-theme="light"] .matrix-table td {
+  border: 1px solid #edebe9;
+  color: #201f1e;
+}
+
+[data-theme="light"] .matrix-table tr:nth-child(even) td {
+  background: #faf9f8;
+}
+
+[data-theme="light"] .matrix-table td.correct-val {
+  background: #dff6dd;
+  color: #107c41;
+  font-weight: 700;
+}
+
+[data-theme="light"] .snackbar {
+  background: #201f1e;
+  color: #ffffff;
+  border: 1px solid #323130;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16);
+}
+
+[data-theme="light"] .modal-body-img {
+  background: #edebe9;
+  border: 1px solid #d2d0ce;
+}
+
