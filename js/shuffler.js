@@ -173,7 +173,9 @@ export function shuffleExamForCode(parsedExam, examCode, options = {}) {
     for (const q of groupQuestions) {
       globalQuestionIndex++;
       const currentQNumber = startQuestionNumber + globalQuestionIndex - 1;
-      const qPrefix = numberingFormat === 'colon' ? `Câu ${currentQNumber}:` : `Câu ${currentQNumber}.`;
+      const qPrefix = numberingFormat === 'colon'
+        ? `Câu ${currentQNumber}:`
+        : (numberingFormat === 'paren' ? `Câu ${currentQNumber})` : `Câu ${currentQNumber}.`);
 
       let processedAnswers = [...q.answers];
 

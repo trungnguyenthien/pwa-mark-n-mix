@@ -162,6 +162,12 @@ export function renderExamPreview(parsedExam) {
   const labelSelect = typeof document !== 'undefined' ? document.getElementById('selDefaultLabelStyle') : null;
   const currentLabelStyle = labelSelect ? labelSelect.value : 'ABCD';
 
+  const radioNumbering = typeof document !== 'undefined' ? document.querySelector('input[name="radioNumbering"]:checked') : null;
+  const currentNumberingFormat = radioNumbering ? radioNumbering.value : 'dot';
+
+  const startNumInput = typeof document !== 'undefined' ? document.getElementById('inpStartQNum') : null;
+  const startQNum = (startNumInput && parseInt(startNumInput.value, 10)) || 1;
+
   parsedExam.groups.forEach((group, gIdx) => {
     const modeBadge = group.mode || 'G';
     const isFixedGroup = group.fixed;
@@ -189,10 +195,18 @@ export function renderExamPreview(parsedExam) {
 
     group.questions.forEach((q) => {
       questionCounter++;
+      const currentQNumber = startQNum + questionCounter - 1;
+      let qNumDisplay = `Câu ${currentQNumber}.`;
+      if (currentNumberingFormat === 'colon') {
+        qNumDisplay = `Câu ${currentQNumber}:`;
+      } else if (currentNumberingFormat === 'paren') {
+        qNumDisplay = `Câu ${currentQNumber})`;
+      }
+
       html += `
         <div class="question-card">
           <div class="question-title-line">
-            <span class="question-qnum"><strong>Câu ${questionCounter}.</strong></span>
+            <span class="question-qnum"><strong>${qNumDisplay}</strong></span>
             <span>${renderFormattedContent(q.text)}</span>
           </div>
           <div class="answers-grid">

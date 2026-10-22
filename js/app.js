@@ -396,14 +396,38 @@ function initEventListeners() {
     });
   }
 
-  // Cập nhật lại giao diện xem trước khi đổi kiểu nhãn đáp án
-  const selDefaultLabelStyle = document.getElementById('selDefaultLabelStyle');
-  if (selDefaultLabelStyle) {
-    selDefaultLabelStyle.addEventListener('change', () => {
+  // Cập nhật lại giao diện xem trước ngay lập tức khi đổi Định dạng số câu
+  const radioNumberings = document.querySelectorAll('input[name="radioNumbering"]');
+  radioNumberings.forEach(radio => {
+    radio.addEventListener('change', () => {
       if (state.parsedExam && state.parsedExam.valid) {
         renderExamPreview(state.parsedExam);
       }
     });
+  });
+
+  // Cập nhật lại giao diện xem trước ngay lập tức khi đổi Kiểu nhãn đáp án
+  const selDefaultLabelStyle = document.getElementById('selDefaultLabelStyle');
+  if (selDefaultLabelStyle) {
+    const updatePreviewOnLabelChange = () => {
+      if (state.parsedExam && state.parsedExam.valid) {
+        renderExamPreview(state.parsedExam);
+      }
+    };
+    selDefaultLabelStyle.addEventListener('change', updatePreviewOnLabelChange);
+    selDefaultLabelStyle.addEventListener('input', updatePreviewOnLabelChange);
+  }
+
+  // Cập nhật lại giao diện xem trước ngay lập tức khi đổi Số câu đầu tiên của đề
+  const inpStartQNum = document.getElementById('inpStartQNum');
+  if (inpStartQNum) {
+    const updatePreviewOnStartNumChange = () => {
+      if (state.parsedExam && state.parsedExam.valid) {
+        renderExamPreview(state.parsedExam);
+      }
+    };
+    inpStartQNum.addEventListener('input', updatePreviewOnStartNumChange);
+    inpStartQNum.addEventListener('change', updatePreviewOnStartNumChange);
   }
 
   // Nút Trộn & Xuất Đề Thi

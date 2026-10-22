@@ -879,7 +879,9 @@ function shuffleExamForCode(parsedExam, examCode, options = {}) {
     for (const q of groupQuestions) {
       globalQuestionIndex++;
       const currentQNumber = startQuestionNumber + globalQuestionIndex - 1;
-      const qPrefix = numberingFormat === 'colon' ? `Câu ${currentQNumber}:` : `Câu ${currentQNumber}.`;
+      const qPrefix = numberingFormat === 'colon'
+        ? `Câu ${currentQNumber}:`
+        : (numberingFormat === 'paren' ? `Câu ${currentQNumber})` : `Câu ${currentQNumber}.`);
 
       let processedAnswers = [...q.answers];
 
@@ -1993,6 +1995,12 @@ function renderExamPreview(parsedExam) {
   const labelSelect = typeof document !== 'undefined' ? document.getElementById('selDefaultLabelStyle') : null;
   const currentLabelStyle = labelSelect ? labelSelect.value : 'ABCD';
 
+  const radioNumbering = typeof document !== 'undefined' ? document.querySelector('input[name="radioNumbering"]:checked') : null;
+  const currentNumberingFormat = radioNumbering ? radioNumbering.value : 'dot';
+
+  const startNumInput = typeof document !== 'undefined' ? document.getElementById('inpStartQNum') : null;
+  const startQNum = (startNumInput && parseInt(startNumInput.value, 10)) || 1;
+
   parsedExam.groups.forEach((group, gIdx) => {
     const modeBadge = group.mode || 'G';
     const isFixedGroup = group.fixed;
@@ -2020,10 +2028,18 @@ function renderExamPreview(parsedExam) {
 
     group.questions.forEach((q) => {
       questionCounter++;
+      const currentQNumber = startQNum + questionCounter - 1;
+      let qNumDisplay = `Câu ${currentQNumber}.`;
+      if (currentNumberingFormat === 'colon') {
+        qNumDisplay = `Câu ${currentQNumber}:`;
+      } else if (currentNumberingFormat === 'paren') {
+        qNumDisplay = `Câu ${currentQNumber})`;
+      }
+
       html += `
         <div class="question-card">
           <div class="question-title-line">
-            <span class="question-qnum"><strong>Câu ${questionCounter}.</strong></span>
+            <span class="question-qnum"><strong>${qNumDisplay}</strong></span>
             <span>${renderFormattedContent(q.text)}</span>
           </div>
           <div class="answers-grid">
@@ -2787,14 +2803,38 @@ function initEventListeners() {
     });
   }
 
-  // Cập nhật lại giao diện xem trước khi đổi kiểu nhãn đáp án
-  const selDefaultLabelStyle = document.getElementById('selDefaultLabelStyle');
-  if (selDefaultLabelStyle) {
-    selDefaultLabelStyle.addEventListener('change', () => {
+  // Cập nhật lại giao diện xem trước ngay lập tức khi đổi Định dạng số câu
+  const radioNumberings = document.querySelectorAll('input[name="radioNumbering"]');
+  radioNumberings.forEach(radio => {
+    radio.addEventListener('change', () => {
       if (state.parsedExam && state.parsedExam.valid) {
         renderExamPreview(state.parsedExam);
       }
     });
+  });
+
+  // Cập nhật lại giao diện xem trước ngay lập tức khi đổi Kiểu nhãn đáp án
+  const selDefaultLabelStyle = document.getElementById('selDefaultLabelStyle');
+  if (selDefaultLabelStyle) {
+    const updatePreviewOnLabelChange = () => {
+      if (state.parsedExam && state.parsedExam.valid) {
+        renderExamPreview(state.parsedExam);
+      }
+    };
+    selDefaultLabelStyle.addEventListener('change', updatePreviewOnLabelChange);
+    selDefaultLabelStyle.addEventListener('input', updatePreviewOnLabelChange);
+  }
+
+  // Cập nhật lại giao diện xem trước ngay lập tức khi đổi Số câu đầu tiên của đề
+  const inpStartQNum = document.getElementById('inpStartQNum');
+  if (inpStartQNum) {
+    const updatePreviewOnStartNumChange = () => {
+      if (state.parsedExam && state.parsedExam.valid) {
+        renderExamPreview(state.parsedExam);
+      }
+    };
+    inpStartQNum.addEventListener('input', updatePreviewOnStartNumChange);
+    inpStartQNum.addEventListener('change', updatePreviewOnStartNumChange);
   }
 
   // Nút Trộn & Xuất Đề Thi
