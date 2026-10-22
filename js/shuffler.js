@@ -82,6 +82,14 @@ export function shufflePreservingFixed(array, rng) {
  * @param {string} style 'ABCD' | 'abcd' | '1234'
  */
 export function getAnswerLabel(index, style = 'ABCD') {
+  if (style === 'ABCD_paren') {
+    const char = String.fromCharCode(65 + (index % 26)); // A, B, C, D...
+    return {
+      raw: char,
+      display: `${char})`
+    };
+  }
+
   if (style === 'abcd') {
     const char = String.fromCharCode(97 + (index % 26)); // a, b, c, d...
     return {

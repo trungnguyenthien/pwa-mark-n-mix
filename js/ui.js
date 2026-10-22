@@ -131,9 +131,18 @@ export function renderExamPreview(parsedExam) {
 
   function renderFormattedContent(text) {
     if (!text) return '';
-    const safe = escapeHtml(text);
+    let formatted = escapeHtml(text);
+    // Phục hồi an toàn các thẻ định dạng <b>, <i>, <u> để xem trước trực quan
+    formatted = formatted
+      .replace(/&lt;b&gt;/gi, '<strong class="q-bold">')
+      .replace(/&lt;\/b&gt;/gi, '</strong>')
+      .replace(/&lt;i&gt;/gi, '<em class="q-italic">')
+      .replace(/&lt;\/i&gt;/gi, '</em>')
+      .replace(/&lt;u&gt;/gi, '<span class="q-underline">')
+      .replace(/&lt;\/u&gt;/gi, '</span>');
+
     // Giữ các dấu xuống hàng tự nhiên
-    const withBreaks = safe.replace(/\n/g, '<br/>');
+    const withBreaks = formatted.replace(/\n/g, '<br/>');
     return withBreaks.replace(/\[IMG:([^\]]+)\]/g, (match, id) => {
       const img = imageMap[id];
       if (img && img.dataUrl) {
@@ -149,6 +158,9 @@ export function renderExamPreview(parsedExam) {
       return '';
     });
   }
+
+  const labelSelect = typeof document !== 'undefined' ? document.getElementById('selDefaultLabelStyle') : null;
+  const currentLabelStyle = labelSelect ? labelSelect.value : 'ABCD';
 
   parsedExam.groups.forEach((group, gIdx) => {
     const modeBadge = group.mode || 'G';
@@ -180,7 +192,7 @@ export function renderExamPreview(parsedExam) {
       html += `
         <div class="question-card">
           <div class="question-title-line">
-            <span class="question-qnum">Câu ${questionCounter}.</span>
+            <span class="question-qnum"><strong>Câu ${questionCounter}.</strong></span>
             <span>${renderFormattedContent(q.text)}</span>
           </div>
           <div class="answers-grid">
@@ -197,7 +209,15 @@ export function renderExamPreview(parsedExam) {
         q.answers.forEach((ans, aIdx) => {
           const isD = ans.correct;
           const isFixed = ans.fixed;
-          const labelTemp = String.fromCharCode(65 + (aIdx % 26));
+
+          let labelDisplay = `${String.fromCharCode(65 + (aIdx % 26))}.`;
+          if (currentLabelStyle === 'ABCD_paren') {
+            labelDisplay = `${String.fromCharCode(65 + (aIdx % 26))})`;
+          } else if (currentLabelStyle === 'abcd') {
+            labelDisplay = `${String.fromCharCode(97 + (aIdx % 26))})`;
+          } else if (currentLabelStyle === '1234') {
+            labelDisplay = `${aIdx + 1}.`;
+          }
 
           html += `
             <div class="answer-item">
@@ -205,7 +225,7 @@ export function renderExamPreview(parsedExam) {
                 ${isD ? '__D__' : '__S__'}
                 ${isFixed ? ' <span class="lock-icon" title="Cố định vị trí (#)">🔒#</span>' : ''}
               </span>
-              <span class="answer-text"><strong>${labelTemp}.</strong> ${renderFormattedContent(ans.text)}</span>
+              <span class="answer-text"><strong>${labelDisplay}</strong> ${renderFormattedContent(ans.text)}</span>
             </div>
           `;
         });

@@ -17,6 +17,31 @@ function getJSZip() {
   return null;
 }
 
+function decodeXml(str) {
+  if (!str) return '';
+  return str
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'");
+}
+
+function wrapRunFormatting(text, b, i, u) {
+  if (!text || (!b && !i && !u)) return text;
+  const startSpaceMatch = text.match(/^(\s*)/);
+  const endSpaceMatch = text.match(/(\s*)$/);
+  const lead = startSpaceMatch ? startSpaceMatch[1] : '';
+  const trail = endSpaceMatch ? endSpaceMatch[1] : '';
+  const core = text.substring(lead.length, text.length - trail.length);
+  if (!core) return text;
+  let res = core;
+  if (u) res = `<u>${res}</u>`;
+  if (i) res = `<i>${res}</i>`;
+  if (b) res = `<b>${res}</b>`;
+  return lead + res + trail;
+}
+
 /**
  * Trích xuất toàn bộ chuỗi văn bản, thẻ ảnh và ngắt dòng từ tệp Word (.docx)
  * @param {Blob|File|ArrayBuffer} file
@@ -208,38 +233,59 @@ export async function extractTextFromDocx(file) {
       return '';
     });
 
-    // Chuyển đổi các thẻ ngắt dòng và tab
-    pContent = pContent.replace(/<w:br(?:\s[^>]*)?\/>/gi, '\n');
-    pContent = pContent.replace(/<w:cr(?:\s[^>]*)?\/>/gi, '\n');
-    pContent = pContent.replace(/<w:tab(?:\s[^>]*)?\/>/gi, '\t');
-
-    // Giải mã thực thể XML
-    let decoded = pContent
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&apos;/g, "'");
-
-    // Trích xuất text từ các thẻ <w:t> và giữ nguyên token ảnh [IMG:...]
-    let pText = '';
-    const tokenRegex = /(<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>|\n|\[IMG:[^\]]+\])/g;
+    // Trích xuất tuần tự các run <w:r> kèm định dạng bold, italic, underline và ngắt dòng
+    const tokenRegex = /(<w:r(?:\s[^>]*)?>[\s\S]*?<\/w:r>|<w:br(?:\s[^>]*)?\/>|<w:cr(?:\s[^>]*)?\/>|<w:tab(?:\s[^>]*)?\/>|\[IMG:[^\]]+\])/gi;
     let tokMatch;
-    while ((tokMatch = tokenRegex.exec(decoded)) !== null) {
-      if (tokMatch[0] === '\n') {
+    let pText = '';
+
+    while ((tokMatch = tokenRegex.exec(pContent)) !== null) {
+      const tok = tokMatch[0];
+      if (tok.startsWith('[IMG:')) {
+        pText += ' ' + tok + ' ';
+      } else if (/<w:(?:br|cr)/i.test(tok)) {
         pText += '\n';
-      } else if (tokMatch[0].startsWith('[IMG:')) {
-        pText += ' ' + tokMatch[0] + ' ';
-      } else {
-        pText += tokMatch[2];
+      } else if (/<w:tab/i.test(tok)) {
+        pText += '\t';
+      } else if (tok.startsWith('<w:r')) {
+        const rPrMatch = tok.match(/<w:rPr>([\s\S]*?)<\/w:rPr>/i);
+        const rPr = rPrMatch ? rPrMatch[1] : '';
+
+        const isBold = /<w:b(?:\s+(?!w:val="(?:0|false)")[^>]*)?\/>|<w:b\s+w:val="(?:1|true)"/i.test(rPr);
+        const isItalic = /<w:i(?:\s+(?!w:val="(?:0|false)")[^>]*)?\/>|<w:i\s+w:val="(?:1|true)"/i.test(rPr);
+        const isUnderline = /<w:u(?:\s+(?!w:val="(?:none|false|0)")[^>]*)?\/>|<w:u\s+w:val="(?!none|false|0)[^"]+"/i.test(rPr);
+
+        const innerRegex = /(<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>|<w:br(?:\s[^>]*)?\/>|<w:cr(?:\s[^>]*)?\/>|<w:tab(?:\s[^>]*)?\/>|\[IMG:[^\]]+\])/gi;
+        let inMatch;
+        while ((inMatch = innerRegex.exec(tok)) !== null) {
+          const inTok = inMatch[0];
+          if (inTok.startsWith('[IMG:')) {
+            pText += ' ' + inTok + ' ';
+          } else if (/<w:(?:br|cr)/i.test(inTok)) {
+            pText += '\n';
+          } else if (/<w:tab/i.test(inTok)) {
+            pText += '\t';
+          } else if (inMatch[2] !== undefined) {
+            const decoded = decodeXml(inMatch[2]);
+            pText += wrapRunFormatting(decoded, isBold, isItalic, isUnderline);
+          }
+        }
       }
     }
 
-    // Nếu đoạn không có thẻ w:t nhưng có chứa ảnh
-    if (!pText && decoded.includes('[IMG:')) {
-      const m = decoded.match(/\[IMG:[^\]]+\]/g);
-      if (m) pText = m.join(' ');
+    // Nếu không khớp run nào nhưng có text trực tiếp
+    if (!pText) {
+      const rawTextMatches = [...pContent.matchAll(/<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>/gi)];
+      if (rawTextMatches.length > 0) {
+        pText = rawTextMatches.map(m => decodeXml(m[1])).join('');
+      } else if (pContent.includes('[IMG:')) {
+        const m = pContent.match(/\[IMG:[^\]]+\]/g);
+        if (m) pText = m.join(' ');
+      }
     }
+
+    // Gỡ bỏ tag format nếu marker bị vô tình bọc trong bold/italic
+    pText = pText.replace(/<([biu])>\s*(__[A-Za-z0-9#_]+__)\s*<\/\1>/gi, '$2');
+    pText = pText.replace(/<([biu])>\s*(<([biu])>\s*(__[A-Za-z0-9#_]+__)\s*<\/\3>)\s*<\/\1>/gi, '$4');
 
     if (pText.trim()) {
       lines.push(pText.trim());

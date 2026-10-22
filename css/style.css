@@ -1076,6 +1076,21 @@ input:checked + .slider::before {
   word-break: break-word;
 }
 
+/* Preserved run formatting from Word docx */
+.q-bold {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.q-italic {
+  font-style: italic;
+}
+
+.q-underline {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* ==========================================================================
    Exam Image Display (Bảo toàn chuẩn Frame & Tỉ lệ từ file Word gốc)
    ========================================================================== */

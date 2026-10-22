@@ -7,6 +7,7 @@ import {
   state,
   updateExamCodes,
   handleFileLoaded,
+  renderExamPreview,
   executeMixAndExport,
   downloadAllZip,
   showSnackbar
@@ -290,6 +291,16 @@ function initEventListeners() {
       const startCode = inpStartExamCode.value.trim() || '101';
       const count = parseInt(inpNumExams.value, 10) || 4;
       updateExamCodes(count, startCode);
+    });
+  }
+
+  // Cập nhật lại giao diện xem trước khi đổi kiểu nhãn đáp án
+  const selDefaultLabelStyle = document.getElementById('selDefaultLabelStyle');
+  if (selDefaultLabelStyle) {
+    selDefaultLabelStyle.addEventListener('change', () => {
+      if (state.parsedExam && state.parsedExam.valid) {
+        renderExamPreview(state.parsedExam);
+      }
     });
   }
 

@@ -45,6 +45,7 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
     BorderStyle,
     AlignmentType,
     PageNumber,
+    UnderlineType,
     Packer
   } = docx;
 
@@ -268,12 +269,12 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
       new TextRun({
         text: 'Họ và tên: ................................................................  ',
         font: FONT_FAMILY,
-        size: 22
+        size: 24
       }),
       new TextRun({
         text: 'Số báo danh: .......................  ',
         font: FONT_FAMILY,
-        size: 22
+        size: 24
       }),
       new TextRun({
         text: 'Mã đề ',
@@ -286,7 +287,7 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
         bold: true,
         color: COLOR_RED,
         font: FONT_FAMILY,
-        size: 26
+        size: 24
       })
     ]
   });
@@ -295,97 +296,129 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
   const contentParagraphs = [];
   const imageMap = shuffledExam.imageMap || headerInfo.imageMap || {};
 
-  // Hàm hỗ trợ tách văn bản và chèn ImageRun cho các token [IMG:rId]
+  // Hàm hỗ trợ tách văn bản kèm định dạng <b>, <i>, <u>, [IMG:...] và ngắt dòng
   function appendContentRuns(targetRuns, text) {
-    const lines = (text || '').split('\n');
-    lines.forEach((line, lIdx) => {
-      if (lIdx > 0) {
-        targetRuns.push(new TextRun({ break: 1 }));
-      }
+    if (!text) return;
+    const tokenRegex = /(<br\s*\/?>|\n|\[IMG:[^\]]+\]|<\/?(?:b|i|u)>)/gi;
+    const parts = text.split(tokenRegex);
 
-      // Phân tách dòng thành các đoạn chữ và token ảnh [IMG:rId]
-      const parts = line.split(/(\[IMG:[^\]]+\])/g);
-      for (const part of parts) {
-        if (!part) continue;
-        const imgMatch = part.match(/^\[IMG:([^\]]+)\]$/);
-        if (imgMatch) {
-          const imgId = imgMatch[1];
-          const imgInfo = imageMap[imgId];
-          if (imgInfo && imgInfo.buffer) {
-            let w = imgInfo.width || 180;
-            let h = imgInfo.height || 100;
-            const MAX_DOCX_WIDTH = 500;
-            const MAX_DOCX_HEIGHT = 450;
-            if (w > MAX_DOCX_WIDTH) {
-              const scale = MAX_DOCX_WIDTH / w;
-              w = MAX_DOCX_WIDTH;
-              h = Math.max(10, Math.round(h * scale));
-            }
-            if (h > MAX_DOCX_HEIGHT) {
-              const scale = MAX_DOCX_HEIGHT / h;
-              h = MAX_DOCX_HEIGHT;
-              w = Math.max(10, Math.round(w * scale));
-            }
+    let isBold = false;
+    let isItalic = false;
+    let isUnderline = false;
 
-            targetRuns.push(new ImageRun({
-              data: imgInfo.buffer,
-              transformation: {
-                width: w,
-                height: h
-              }
-            }));
+    for (const part of parts) {
+      if (!part) continue;
+      const lower = part.toLowerCase();
+      if (lower === '<b>') {
+        isBold = true;
+      } else if (lower === '</b>') {
+        isBold = false;
+      } else if (lower === '<i>') {
+        isItalic = true;
+      } else if (lower === '</i>') {
+        isItalic = false;
+      } else if (lower === '<u>') {
+        isUnderline = true;
+      } else if (lower === '</u>') {
+        isUnderline = false;
+      } else if (lower === '\n' || lower === '<br>' || lower === '<br/>') {
+        targetRuns.push(new TextRun({ break: 1, font: FONT_FAMILY, size: 24 }));
+      } else if (/^\[IMG:([^\]]+)\]$/i.test(part)) {
+        const imgMatch = part.match(/^\[IMG:([^\]]+)\]$/i);
+        const imgId = imgMatch[1];
+        const imgInfo = imageMap[imgId];
+        if (imgInfo && imgInfo.buffer) {
+          let w = imgInfo.width || 180;
+          let h = imgInfo.height || 100;
+          const MAX_DOCX_WIDTH = 500;
+          const MAX_DOCX_HEIGHT = 450;
+          if (w > MAX_DOCX_WIDTH) {
+            const scale = MAX_DOCX_WIDTH / w;
+            w = MAX_DOCX_WIDTH;
+            h = Math.max(10, Math.round(h * scale));
           }
-        } else {
-          targetRuns.push(new TextRun({
-            text: part,
-            font: FONT_FAMILY,
-            size: 24
+          if (h > MAX_DOCX_HEIGHT) {
+            const scale = MAX_DOCX_HEIGHT / h;
+            h = MAX_DOCX_HEIGHT;
+            w = Math.max(10, Math.round(w * scale));
+          }
+
+          targetRuns.push(new ImageRun({
+            data: imgInfo.buffer,
+            transformation: {
+              width: w,
+              height: h
+            }
           }));
         }
-      }
-    });
-  }
-
-  for (const q of shuffledExam.flatQuestions) {
-    // Đoạn câu hỏi
-    const questionRuns = [
-      new TextRun({
-        text: `${q.displayPrefix} `,
-        bold: true,
-        font: FONT_FAMILY,
-        size: 24
-      })
-    ];
-
-    appendContentRuns(questionRuns, q.text);
-
-    contentParagraphs.push(new Paragraph({
-      spacing: { before: 120, after: 60 },
-      children: questionRuns
-    }));
-
-    // Đoạn đáp án (Câu trả lời ngắn không hiển thị đáp án trong đề thi theo mục 5.2)
-    if (q.type !== 'short_answer') {
-      for (const ans of q.answers) {
-        const answerRuns = [
-          new TextRun({
-            text: `${ans.labelDisplay} `,
-            bold: true,
-            font: FONT_FAMILY,
-            size: 24
-          })
-        ];
-
-        appendContentRuns(answerRuns, ans.text);
-
-        contentParagraphs.push(new Paragraph({
-          indent: { left: 400 }, // Thụt đầu dòng cho các phương án đáp án
-          spacing: { before: 30, after: 30 },
-          children: answerRuns
+      } else {
+        targetRuns.push(new TextRun({
+          text: part,
+          font: FONT_FAMILY, // Times New Roman
+          size: 24,          // 12pt
+          bold: isBold,
+          italics: isItalic,
+          underline: isUnderline ? { type: UnderlineType.SINGLE } : undefined
         }));
       }
     }
   }
+
+  // Duyệt theo từng nhóm để đảm bảo có khoảng trống rõ ràng giữa các câu hỏi và các nhóm
+  const groups = (shuffledExam.groups && shuffledExam.groups.length > 0)
+    ? shuffledExam.groups
+    : [{ questions: shuffledExam.flatQuestions || [] }];
+
+  groups.forEach((group, gIdx) => {
+    const isFirstGroup = (gIdx === 0);
+
+    group.questions.forEach((q, qIdxInGroup) => {
+      const isFirstQInGroup = (qIdxInGroup === 0);
+
+      // Đoạn câu hỏi với "Câu 1.", "Câu 1:" được IN ĐẬM và chuẩn 12pt Times New Roman
+      const questionRuns = [
+        new TextRun({
+          text: `${q.displayPrefix} `,
+          bold: true, // IN ĐẬM "Câu 1.", "Câu 2."
+          font: FONT_FAMILY,
+          size: 24 // 12pt
+        })
+      ];
+
+      appendContentRuns(questionRuns, q.text);
+
+      // Khoảng cách: Trước câu đầu tiên của nhóm mới (từ nhóm 2 trở đi) có khoảng trống lớn hơn rõ rệt (260 twips)
+      // Giữa các câu hỏi thông thường có khoảng trống 160 twips trước câu
+      const beforeSpacing = (!isFirstGroup && isFirstQInGroup) ? 260 : 160;
+
+      contentParagraphs.push(new Paragraph({
+        spacing: { before: beforeSpacing, after: 60 },
+        children: questionRuns
+      }));
+
+      // Đoạn đáp án (Câu trả lời ngắn không hiển thị đáp án trong đề thi theo mục 5.2)
+      if (q.type !== 'short_answer') {
+        for (const ans of q.answers) {
+          const answerRuns = [
+            new TextRun({
+              text: `${ans.labelDisplay} `,
+              bold: true, // IN ĐẬM "A.", "B.", "A)", "B)"
+              font: FONT_FAMILY,
+              size: 24 // 12pt
+            })
+          ];
+
+          appendContentRuns(answerRuns, ans.text);
+
+          contentParagraphs.push(new Paragraph({
+            indent: { left: 400 }, // Thụt đầu dòng cho các phương án đáp án
+            spacing: { before: 30, after: 30 },
+            children: answerRuns
+          }));
+        }
+      }
+    });
+  });
 
   // Đoạn kết thúc đề
   contentParagraphs.push(new Paragraph({
@@ -396,7 +429,7 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
         text: '----------------------- HẾT -----------------------',
         bold: true,
         font: FONT_FAMILY,
-        size: 22
+        size: 24 // 12pt
       })
     ]
   }));
