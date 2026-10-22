@@ -278,15 +278,26 @@ export async function handleFileLoaded(file) {
     document.getElementById('txtRawExtracted').textContent = result.text;
     document.getElementById('rawTextMeta').textContent = `${result.text.split('\n').length} dòng`;
 
-    // Điền trước thông tin đầu đề nếu trích xuất được từ file Word
-    if (result.extractedHeader) {
+    // Điền trước thông tin đầu đề nếu trích xuất được từ file Word của người dùng (không áp dụng cho file mẫu)
+    if (result.extractedHeader && !file.isSample) {
       const h = result.extractedHeader;
-      if (h.soGD) document.getElementById('inpSoGD').value = h.soGD;
-      if (h.truong) document.getElementById('inpTruong').value = h.truong;
-      if (h.kiKiemTra) document.getElementById('inpKiKiemTra').value = h.kiKiemTra;
-      if (h.namHoc) document.getElementById('inpNamHoc').value = h.namHoc;
-      if (h.mon) document.getElementById('inpMon').value = h.mon;
-      if (h.thoiGian) document.getElementById('inpThoiGian').value = h.thoiGian;
+      const fillIfEmpty = (id, val) => {
+        const el = document.getElementById(id);
+        if (el && !el.value.trim() && val) {
+          el.value = val;
+        }
+      };
+      if (h.soGD) fillIfEmpty('inpSoGD', h.soGD);
+      if (h.truong) fillIfEmpty('inpTruong', h.truong);
+      if (h.kiKiemTra) fillIfEmpty('inpKiKiemTra', h.kiKiemTra);
+      if (h.namHoc) fillIfEmpty('inpNamHoc', h.namHoc);
+      if (h.mon) fillIfEmpty('inpMon', h.mon);
+      if (h.thoiGian) fillIfEmpty('inpThoiGian', h.thoiGian);
+    }
+
+    // Cập nhật trạng thái warning và cookie cho các ô thông tin đầu đề
+    if (typeof window.updateHeaderValidationUI === 'function') {
+      window.updateHeaderValidationUI();
     }
 
     // Phân tích cú pháp Marker theo tiêu chuẩn Mục 3 & 7
@@ -332,13 +343,18 @@ export async function handleFileLoaded(file) {
  * Lấy các thông số cấu hình đầu đề từ giao diện
  */
 export function getHeaderConfig() {
+  const getVal = (id) => {
+    const el = document.getElementById(id);
+    return el ? el.value.trim() : '';
+  };
+
   return {
-    soGD: document.getElementById('inpSoGD').value.trim() || 'SỞ GD&ĐT TP HCM',
-    truong: document.getElementById('inpTruong').value.trim() || 'TRƯỜNG THPT NGUYỄN HỮU HUÂN',
-    kiKiemTra: document.getElementById('inpKiKiemTra').value.trim() || 'GIỮA HK 1',
-    namHoc: document.getElementById('inpNamHoc').value.trim() || '2026 - 2027',
-    mon: document.getElementById('inpMon').value.trim() || 'VẬT LÝ',
-    thoiGian: document.getElementById('inpThoiGian').value.trim() || '45 phút'
+    soGD: getVal('inpSoGD'),
+    truong: getVal('inpTruong'),
+    kiKiemTra: getVal('inpKiKiemTra'),
+    namHoc: getVal('inpNamHoc'),
+    mon: getVal('inpMon'),
+    thoiGian: getVal('inpThoiGian')
   };
 }
 
@@ -383,6 +399,19 @@ export async function executeMixAndExport() {
     headerInfo.imageMap = state.imageMap || {};
     const mixingOptions = getMixingOptions();
 
+    // Cảnh báo nếu các mục thông tin đầu đề thi chưa được nhập
+    const emptyFields = [];
+    if (!headerInfo.soGD) emptyFields.push('Sở/Phòng GD');
+    if (!headerInfo.truong) emptyFields.push('Tên trường');
+    if (!headerInfo.kiKiemTra) emptyFields.push('Kì kiểm tra');
+    if (!headerInfo.namHoc) emptyFields.push('Năm học');
+    if (!headerInfo.mon) emptyFields.push('Môn thi');
+    if (!headerInfo.thoiGian) emptyFields.push('Thời gian');
+
+    if (emptyFields.length > 0) {
+      showSnackbar(`⚠️ Chú ý: Còn ${emptyFields.length} mục đầu đề chưa điền (${emptyFields.slice(0, 3).join(', ')}${emptyFields.length > 3 ? '...' : ''})!`, 3500);
+    }
+
     // 1. Hoán vị tất cả các mã đề
     const shuffledExams = shuffleAllExams(state.parsedExam, state.examCodes, mixingOptions);
     shuffledExams.forEach(exam => {
@@ -412,7 +441,8 @@ export async function executeMixAndExport() {
 
     // 4. Tạo file Word Bảng Đáp Án Ma Trận
     const answerBlob = await createAnswerKeyDocxBlob(shuffledExams, headerInfo);
-    const answerFileName = `Bang_Dap_An_${headerInfo.mon.replace(/\s+/g, '_')}.docx`;
+    const safeMon = (headerInfo.mon || 'Mon_Hoc').trim().replace(/[\s/\\:*?"<>|]+/g, '_') || 'Mon_Hoc';
+    const answerFileName = `Bang_Dap_An_${safeMon}.docx`;
     zip.file(answerFileName, answerBlob);
     const answerUrl = URL.createObjectURL(answerBlob);
     state.generatedFiles.push({

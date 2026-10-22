@@ -203,35 +203,63 @@
             </div>
           </div>
 
+          <!-- Thông báo cảnh báo khi chưa nhập đủ thông tin đầu đề thi -->
+          <div id="headerWarningNotice" class="header-warning-notice hidden" role="status">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="warning-icon">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            <span class="warning-text">Vui lòng nhập thông tin đầu đề thi bên dưới (hệ thống sẽ tự động lưu vào cookie để dùng lại lần sau).</span>
+          </div>
+
           <div class="form-grid">
-            <div class="form-group">
-              <label for="inpSoGD" class="form-label">Sở / Phòng Giáo dục &amp; Đào tạo:</label>
-              <input type="text" id="inpSoGD" class="form-input" value="SỞ GD&ĐT TP HCM" placeholder="Ví dụ: SỞ GD&ĐT TP HCM">
+            <div class="form-group" data-field="inpSoGD">
+              <div class="form-label-row">
+                <label for="inpSoGD" class="form-label">Sở / Phòng Giáo dục &amp; Đào tạo:</label>
+                <span class="field-warning-tag hidden" id="warn_inpSoGD">⚠️ Chưa nhập</span>
+              </div>
+              <input type="text" id="inpSoGD" class="form-input header-cached-input" value="" placeholder="Ví dụ: SỞ GD&ĐT TP HỒ CHÍ MINH">
             </div>
 
-            <div class="form-group">
-              <label for="inpTruong" class="form-label">Tên Trường / Đơn vị:</label>
-              <input type="text" id="inpTruong" class="form-input" value="TRƯỜNG THPT NGUYỄN HỮU HUÂN" placeholder="Ví dụ: TRƯỜNG THPT NGUYỄN HỮU HUÂN">
+            <div class="form-group" data-field="inpTruong">
+              <div class="form-label-row">
+                <label for="inpTruong" class="form-label">Tên Trường / Đơn vị:</label>
+                <span class="field-warning-tag hidden" id="warn_inpTruong">⚠️ Chưa nhập</span>
+              </div>
+              <input type="text" id="inpTruong" class="form-input header-cached-input" value="" placeholder="Ví dụ: TRƯỜNG THPT NGUYỄN HỮU HUÂN">
             </div>
 
-            <div class="form-group">
-              <label for="inpKiKiemTra" class="form-label">Kì kiểm tra / Đợt thi:</label>
-              <input type="text" id="inpKiKiemTra" class="form-input" value="GIỮA HK 1" placeholder="Ví dụ: GIỮA HK 1, CUỐI KÌ 1...">
+            <div class="form-group" data-field="inpKiKiemTra">
+              <div class="form-label-row">
+                <label for="inpKiKiemTra" class="form-label">Kì kiểm tra / Đợt thi:</label>
+                <span class="field-warning-tag hidden" id="warn_inpKiKiemTra">⚠️ Chưa nhập</span>
+              </div>
+              <input type="text" id="inpKiKiemTra" class="form-input header-cached-input" value="" placeholder="Ví dụ: KIỂM TRA GIỮA HỌC KỲ I">
             </div>
 
-            <div class="form-group">
-              <label for="inpNamHoc" class="form-label">Năm học:</label>
-              <input type="text" id="inpNamHoc" class="form-input" value="2026 - 2027" placeholder="Ví dụ: 2026 - 2027">
+            <div class="form-group" data-field="inpNamHoc">
+              <div class="form-label-row">
+                <label for="inpNamHoc" class="form-label">Năm học:</label>
+                <span class="field-warning-tag hidden" id="warn_inpNamHoc">⚠️ Chưa nhập</span>
+              </div>
+              <input type="text" id="inpNamHoc" class="form-input header-cached-input" value="" placeholder="Ví dụ: 2026 - 2027">
             </div>
 
-            <div class="form-group">
-              <label for="inpMon" class="form-label">Môn thi:</label>
-              <input type="text" id="inpMon" class="form-input" value="VẬT LÝ" placeholder="Ví dụ: VẬT LÝ, TOÁN...">
+            <div class="form-group" data-field="inpMon">
+              <div class="form-label-row">
+                <label for="inpMon" class="form-label">Môn thi:</label>
+                <span class="field-warning-tag hidden" id="warn_inpMon">⚠️ Chưa nhập</span>
+              </div>
+              <input type="text" id="inpMon" class="form-input header-cached-input" value="" placeholder="Ví dụ: VẬT LÝ, TOÁN HỌC, HÓA HỌC...">
             </div>
 
-            <div class="form-group">
-              <label for="inpThoiGian" class="form-label">Thời gian làm bài:</label>
-              <input type="text" id="inpThoiGian" class="form-input" value="45 phút" placeholder="Ví dụ: 45 phút, 50 phút...">
+            <div class="form-group" data-field="inpThoiGian">
+              <div class="form-label-row">
+                <label for="inpThoiGian" class="form-label">Thời gian làm bài:</label>
+                <span class="field-warning-tag hidden" id="warn_inpThoiGian">⚠️ Chưa nhập</span>
+              </div>
+              <input type="text" id="inpThoiGian" class="form-input header-cached-input" value="" placeholder="Ví dụ: 45 phút, 60 phút, 90 phút...">
             </div>
           </div>
         </section>

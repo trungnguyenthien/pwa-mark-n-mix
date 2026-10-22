@@ -4,59 +4,7 @@
    ========================================================================== */
 
 :root {
-  /* Dark Theme (Default) */
-  --bg-primary: #090d16;
-  --bg-surface: #111827;
-  --bg-surface-elevated: #1a2234;
-  --bg-surface-hover: #232f48;
-  --bg-input: #0b1120;
-  
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-medium: rgba(255, 255, 255, 0.15);
-  --border-focus: #6366f1;
-
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-
-  /* Primary Brand: Indigo & Violet */
-  --primary: #6366f1;
-  --primary-hover: #4f46e5;
-  --primary-glow: rgba(99, 102, 241, 0.35);
-  --primary-subtle: rgba(99, 102, 241, 0.12);
-
-  /* Semantic Colors */
-  --success: #10b981;
-  --success-glow: rgba(16, 185, 129, 0.25);
-  --success-subtle: rgba(16, 185, 129, 0.12);
-
-  --danger: #ef4444;
-  --danger-glow: rgba(239, 68, 68, 0.25);
-  --danger-subtle: rgba(239, 68, 68, 0.12);
-
-  --warning: #f59e0b;
-  --warning-subtle: rgba(245, 158, 11, 0.12);
-
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-xl: 22px;
-  --radius-full: 9999px;
-
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 10px 28px rgba(0, 0, 0, 0.6);
-  --shadow-glow: 0 0 24px var(--primary-glow);
-
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-heading: 'Outfit', var(--font-sans);
-
-  --transition-fast: 0.15s ease;
-  --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Light Mode Overrides (Chuẩn Microsoft Word 365 Light Theme) */
-[data-theme="light"] {
+  /* Microsoft Word 365 Light Theme (Duy nhất) */
   --bg-primary: #edebe9;         /* Nền canvas xám đặc trưng trang soạn thảo Word */
   --bg-surface: #ffffff;         /* Nền giấy trắng tinh khiết của tài liệu Word */
   --bg-surface-elevated: #f8f9fa;/* Nền dải Ribbon & Card */
@@ -82,17 +30,51 @@
   --success-glow: rgba(16, 124, 65, 0.2);
   --success-subtle: rgba(16, 124, 65, 0.08);
 
-  --danger: #a80000;             /* Đỏ mận Microsoft Office */
-  --danger-glow: rgba(168, 0, 0, 0.2);
-  --danger-subtle: rgba(168, 0, 0, 0.08);
+  --danger: #c42b1c;             /* Đỏ Microsoft Office */
+  --danger-glow: rgba(196, 43, 28, 0.2);
+  --danger-subtle: rgba(196, 43, 28, 0.08);
 
   --warning: #d83b01;            /* Cam Office */
   --warning-subtle: rgba(216, 59, 1, 0.08);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-full: 9999px;
 
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.07);
   --shadow-md: 0 3px 10px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.04);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.05);
   --shadow-glow: 0 0 18px rgba(24, 90, 189, 0.25);
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: 'Outfit', var(--font-sans);
+
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="light"] {
+  /* Đồng bộ đầy đủ các biến cho data-theme="light" */
+  --bg-primary: #edebe9;
+  --bg-surface: #ffffff;
+  --bg-surface-elevated: #f8f9fa;
+  --bg-surface-hover: #e5e5e5;
+  --bg-input: #ffffff;
+  --border-subtle: #edebe9;
+  --border-medium: #d2d0ce;
+  --border-focus: #185abd;
+  --text-primary: #201f1e;
+  --text-secondary: #484644;
+  --text-muted: #797775;
+  --primary: #185abd;
+  --primary-hover: #104a9e;
+  --primary-glow: rgba(24, 90, 189, 0.28);
+  --primary-subtle: rgba(24, 90, 189, 0.08);
+  --success: #107c41;
+  --danger: #c42b1c;
+  --warning: #d83b01;
 }
 
 /* Base Reset */
@@ -114,9 +96,7 @@ body {
   color: var(--text-primary);
   line-height: 1.5;
   min-height: 100vh;
-  background-image: 
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.15), transparent),
-    radial-gradient(circle at 100% 0%, rgba(16, 185, 129, 0.08), transparent 40%);
+  background-image: linear-gradient(180deg, #edebe9 0%, #f3f2f1 100%);
   background-attachment: fixed;
 }
 
@@ -127,7 +107,7 @@ body {
 }
 
 /* ==========================================================================
-   Header Styles
+   Header Styles (Thanh Ribbon Chuẩn Microsoft Word)
    ========================================================================== */
 .app-header {
   position: sticky;
@@ -137,10 +117,9 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 14px 28px;
-  background-color: rgba(9, 13, 22, 0.82);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border-subtle);
+  background: linear-gradient(135deg, #185abd 0%, #104a9e 100%);
+  border-bottom: 1px solid #0d3c80;
+  box-shadow: 0 2px 10px rgba(16, 74, 158, 0.25);
 }
 
 .header-brand {
@@ -651,10 +630,59 @@ body {
   gap: 6px;
 }
 
+.form-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .form-label {
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--text-secondary);
+}
+
+.field-warning-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #c42b1c;
+  background: #fdf3f2;
+  border: 1px solid #f8d7d5;
+  padding: 1px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.01em;
+  animation: pulseWarning 2s infinite ease-in-out;
+}
+
+@keyframes pulseWarning {
+  0%, 100% { opacity: 0.95; }
+  50% { opacity: 0.6; }
+}
+
+.header-warning-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  background: #fff8f0;
+  border: 1px solid #f9d9b7;
+  border-left: 4px solid #d83b01;
+  border-radius: var(--radius-sm, 4px);
+  color: #7a2700;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.4;
+  transition: all var(--transition-fast);
+}
+
+.header-warning-notice .warning-icon {
+  color: #d83b01;
+  flex-shrink: 0;
 }
 
 .form-input, .form-select {
@@ -668,6 +696,23 @@ body {
   transition: all var(--transition-fast);
   outline: none;
   width: 100%;
+}
+
+.form-input::placeholder {
+  color: #a19f9d;
+  font-style: italic;
+  font-weight: 400;
+}
+
+.form-input.input-warning {
+  border-color: #d83b01 !important;
+  background-color: #fffdfc !important;
+  box-shadow: 0 0 0 1px rgba(216, 59, 1, 0.25) !important;
+}
+
+.form-input.input-warning:focus {
+  border-color: #c42b1c !important;
+  box-shadow: 0 0 0 3px rgba(196, 43, 28, 0.2) !important;
 }
 
 .form-input:focus, .form-select:focus {
@@ -1055,22 +1100,27 @@ input:checked + .slider::before {
   height: 22px;
   line-height: 22px;
   margin-top: 1px;
+  letter-spacing: 0.02em;
 }
 
 .ans-pill.d {
-  background: var(--success-subtle);
-  color: var(--success);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  background-color: #107c41 !important;
+  color: #ffffff !important;
+  border: 1px solid #0e6b37 !important;
+  box-shadow: 0 1px 2px rgba(16, 124, 65, 0.25);
 }
 
 .ans-pill.s {
-  background: var(--bg-surface-hover);
-  color: var(--text-secondary);
-  border: 1px solid var(--border-subtle);
+  background-color: #d13438 !important;
+  color: #ffffff !important;
+  border: 1px solid #b71c1c !important;
+  box-shadow: 0 1px 2px rgba(209, 52, 56, 0.25);
 }
 
 .ans-pill .lock-icon {
-  font-size: 0.7rem;
+  font-size: 0.72rem;
+  color: #ffffff !important;
+  margin-left: 2px;
 }
 
 .answer-text {
@@ -1695,15 +1745,15 @@ input:checked + .slider::before {
 }
 
 [data-theme="light"] .ans-pill.d {
-  background: #dff6dd;
-  color: #107c41;
-  border: 1px solid #107c41;
+  background-color: #107c41 !important;
+  color: #ffffff !important;
+  border: 1px solid #0e6b37 !important;
 }
 
 [data-theme="light"] .ans-pill.s {
-  background: #f3f2f1;
-  color: #605e5c;
-  border: 1px solid #d2d0ce;
+  background-color: #d13438 !important;
+  color: #ffffff !important;
+  border: 1px solid #b71c1c !important;
 }
 
 [data-theme="light"] .raw-view-container {

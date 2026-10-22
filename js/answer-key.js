@@ -139,7 +139,7 @@ export async function createAnswerKeyDocxBlob(allShuffledExams, headerInfo = {})
       spacing: { after: 40 },
       children: [
         new TextRun({
-          text: `BẢNG ĐÁP ÁN ${kiKiemTra.toUpperCase()} - NĂM HỌC ${namHoc}`,
+          text: `BẢNG ĐÁP ÁN ${(kiKiemTra || '').toUpperCase()} - NĂM HỌC ${(namHoc || '')}`.trim(),
           bold: true,
           color: '000000',
           font: FONT_FAMILY,

@@ -403,7 +403,6 @@ async function readExamDocx(file) {
   };
 }
 
-
 // --- FILE: js/parser.js ---
 /**
  * Module Phân Tích Cú Pháp Marker Đề Thi (Parser)
@@ -706,7 +705,6 @@ function parseExam(rawText) {
   };
 }
 
-
 // --- FILE: js/shuffler.js ---
 /**
  * Module Hoán Vị Đề Thi (Shuffler)
@@ -972,7 +970,6 @@ function shuffleAllExams(parsedExam, examCodes, options = {}) {
 
   return result;
 }
-
 
 // --- FILE: js/docx-builder.js ---
 /**
@@ -1447,7 +1444,6 @@ async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
   return await Packer.toBlob(doc);
 }
 
-
 // --- FILE: js/answer-key.js ---
 /**
  * Module Tạo Bảng Đáp Án (Answer Key)
@@ -1590,7 +1586,7 @@ async function createAnswerKeyDocxBlob(allShuffledExams, headerInfo = {}) {
       spacing: { after: 40 },
       children: [
         new TextRun({
-          text: `BẢNG ĐÁP ÁN ${kiKiemTra.toUpperCase()} - NĂM HỌC ${namHoc}`,
+          text: `BẢNG ĐÁP ÁN ${(kiKiemTra || '').toUpperCase()} - NĂM HỌC ${(namHoc || '')}`.trim(),
           bold: true,
           color: '000000',
           font: FONT_FAMILY,
@@ -1775,17 +1771,12 @@ async function createAnswerKeyDocxBlob(allShuffledExams, headerInfo = {}) {
   return await Packer.toBlob(doc);
 }
 
-
 // --- FILE: js/ui.js ---
 /**
  * Module Giao Diện Người Dùng (UI Controller)
  * Quản lý tương tác nạp file Word (.docx), cấu hình đầu đề, tùy chọn trộn,
  * hiển thị xem trước trực quan và xử lý xuất file DOCX / ZIP.
  */
-
-
-
-
 
 
 // Trạng thái ứng dụng
@@ -2056,15 +2047,26 @@ async function handleFileLoaded(file) {
     document.getElementById('txtRawExtracted').textContent = result.text;
     document.getElementById('rawTextMeta').textContent = `${result.text.split('\n').length} dòng`;
 
-    // Điền trước thông tin đầu đề nếu trích xuất được từ file Word
-    if (result.extractedHeader) {
+    // Điền trước thông tin đầu đề nếu trích xuất được từ file Word của người dùng (không áp dụng cho file mẫu)
+    if (result.extractedHeader && !file.isSample) {
       const h = result.extractedHeader;
-      if (h.soGD) document.getElementById('inpSoGD').value = h.soGD;
-      if (h.truong) document.getElementById('inpTruong').value = h.truong;
-      if (h.kiKiemTra) document.getElementById('inpKiKiemTra').value = h.kiKiemTra;
-      if (h.namHoc) document.getElementById('inpNamHoc').value = h.namHoc;
-      if (h.mon) document.getElementById('inpMon').value = h.mon;
-      if (h.thoiGian) document.getElementById('inpThoiGian').value = h.thoiGian;
+      const fillIfEmpty = (id, val) => {
+        const el = document.getElementById(id);
+        if (el && !el.value.trim() && val) {
+          el.value = val;
+        }
+      };
+      if (h.soGD) fillIfEmpty('inpSoGD', h.soGD);
+      if (h.truong) fillIfEmpty('inpTruong', h.truong);
+      if (h.kiKiemTra) fillIfEmpty('inpKiKiemTra', h.kiKiemTra);
+      if (h.namHoc) fillIfEmpty('inpNamHoc', h.namHoc);
+      if (h.mon) fillIfEmpty('inpMon', h.mon);
+      if (h.thoiGian) fillIfEmpty('inpThoiGian', h.thoiGian);
+    }
+
+    // Cập nhật trạng thái warning và cookie cho các ô thông tin đầu đề
+    if (typeof window.updateHeaderValidationUI === 'function') {
+      window.updateHeaderValidationUI();
     }
 
     // Phân tích cú pháp Marker theo tiêu chuẩn Mục 3 & 7
@@ -2110,13 +2112,18 @@ async function handleFileLoaded(file) {
  * Lấy các thông số cấu hình đầu đề từ giao diện
  */
 function getHeaderConfig() {
+  const getVal = (id) => {
+    const el = document.getElementById(id);
+    return el ? el.value.trim() : '';
+  };
+
   return {
-    soGD: document.getElementById('inpSoGD').value.trim() || 'SỞ GD&ĐT TP HCM',
-    truong: document.getElementById('inpTruong').value.trim() || 'TRƯỜNG THPT NGUYỄN HỮU HUÂN',
-    kiKiemTra: document.getElementById('inpKiKiemTra').value.trim() || 'GIỮA HK 1',
-    namHoc: document.getElementById('inpNamHoc').value.trim() || '2026 - 2027',
-    mon: document.getElementById('inpMon').value.trim() || 'VẬT LÝ',
-    thoiGian: document.getElementById('inpThoiGian').value.trim() || '45 phút'
+    soGD: getVal('inpSoGD'),
+    truong: getVal('inpTruong'),
+    kiKiemTra: getVal('inpKiKiemTra'),
+    namHoc: getVal('inpNamHoc'),
+    mon: getVal('inpMon'),
+    thoiGian: getVal('inpThoiGian')
   };
 }
 
@@ -2161,6 +2168,19 @@ async function executeMixAndExport() {
     headerInfo.imageMap = state.imageMap || {};
     const mixingOptions = getMixingOptions();
 
+    // Cảnh báo nếu các mục thông tin đầu đề thi chưa được nhập
+    const emptyFields = [];
+    if (!headerInfo.soGD) emptyFields.push('Sở/Phòng GD');
+    if (!headerInfo.truong) emptyFields.push('Tên trường');
+    if (!headerInfo.kiKiemTra) emptyFields.push('Kì kiểm tra');
+    if (!headerInfo.namHoc) emptyFields.push('Năm học');
+    if (!headerInfo.mon) emptyFields.push('Môn thi');
+    if (!headerInfo.thoiGian) emptyFields.push('Thời gian');
+
+    if (emptyFields.length > 0) {
+      showSnackbar(`⚠️ Chú ý: Còn ${emptyFields.length} mục đầu đề chưa điền (${emptyFields.slice(0, 3).join(', ')}${emptyFields.length > 3 ? '...' : ''})!`, 3500);
+    }
+
     // 1. Hoán vị tất cả các mã đề
     const shuffledExams = shuffleAllExams(state.parsedExam, state.examCodes, mixingOptions);
     shuffledExams.forEach(exam => {
@@ -2190,7 +2210,8 @@ async function executeMixAndExport() {
 
     // 4. Tạo file Word Bảng Đáp Án Ma Trận
     const answerBlob = await createAnswerKeyDocxBlob(shuffledExams, headerInfo);
-    const answerFileName = `Bang_Dap_An_${headerInfo.mon.replace(/\s+/g, '_')}.docx`;
+    const safeMon = (headerInfo.mon || 'Mon_Hoc').trim().replace(/[\s/\\:*?"<>|]+/g, '_') || 'Mon_Hoc';
+    const answerFileName = `Bang_Dap_An_${safeMon}.docx`;
     zip.file(answerFileName, answerBlob);
     const answerUrl = URL.createObjectURL(answerBlob);
     state.generatedFiles.push({
@@ -2300,7 +2321,6 @@ function downloadAllZip() {
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
-
 // --- FILE: js/app.js ---
 /**
  * PWA Mark 'n Mix - Main Application Entry
@@ -2313,6 +2333,7 @@ let deferredInstallPrompt = null;
 // Khởi chạy khi DOM sẵn sàng
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
+  initHeaderInfoCacheAndValidation();
   initNetworkStatus();
   initPWA();
   initEventListeners();
@@ -2325,42 +2346,136 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /**
- * Quản lý Dark/Light Theme (Mặc định Light Theme chuẩn phong cách Microsoft Word)
+ * Quản lý Giao diện (Duy nhất 1 Theme Light chuẩn Microsoft Word)
  */
 function initTheme() {
-  const savedTheme = localStorage.getItem('pwa_mark_mix_theme') || 'light';
-  applyTheme(savedTheme);
+  document.documentElement.setAttribute('data-theme', 'light');
+  try {
+    localStorage.removeItem('pwa_mark_mix_theme');
+  } catch (e) {}
 
-  const btnThemeToggle = document.getElementById('btnThemeToggle');
-  if (btnThemeToggle) {
-    btnThemeToggle.addEventListener('click', () => {
-      const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-      applyTheme(newTheme);
-      localStorage.setItem('pwa_mark_mix_theme', newTheme);
-    });
+  const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+  if (metaThemeColor) {
+    metaThemeColor.setAttribute('content', '#185abd');
   }
 }
 
-function applyTheme(theme) {
-  document.documentElement.setAttribute('data-theme', theme);
-  const iconSun = document.querySelector('.icon-sun');
-  const iconMoon = document.querySelector('.icon-moon');
-  if (iconSun && iconMoon) {
-    if (theme === 'dark') {
-      iconSun.classList.remove('hidden');
-      iconMoon.classList.add('hidden');
-    } else {
-      iconSun.classList.add('hidden');
-      iconMoon.classList.remove('hidden');
+/**
+ * Cookie Helpers & Cache Thông Tin Đầu Đề Thi
+ * - Cookie lưu 365 ngày (SameSite=Lax, URI-encoded)
+ * - Tự động đồng bộ localStorage để hoạt động bền vững ngay cả khi offline PWA
+ */
+function setCookie(name, value, days = 365) {
+  try {
+    const expires = new Date(Date.now() + days * 864e5).toUTCString();
+    document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
+    localStorage.setItem(`cookie_${name}`, value);
+  } catch (e) {
+    console.warn('Lỗi ghi cookie/localStorage:', e);
+  }
+}
+
+function getCookie(name) {
+  try {
+    const nameEq = encodeURIComponent(name) + '=';
+    const ca = document.cookie.split(';');
+    for (let c of ca) {
+      c = c.trim();
+      if (c.indexOf(nameEq) === 0) {
+        return decodeURIComponent(c.substring(nameEq.length));
+      }
+    }
+    const fallbackVal = localStorage.getItem(`cookie_${name}`);
+    if (fallbackVal !== null && fallbackVal !== undefined) {
+      return fallbackVal;
+    }
+  } catch (e) {
+    console.warn('Lỗi đọc cookie/localStorage:', e);
+  }
+  return '';
+}
+
+const HEADER_FIELDS_CONFIG = [
+  { id: 'inpSoGD', cookieKey: 'pwa_exam_so_gd', label: 'Sở / Phòng GD&ĐT' },
+  { id: 'inpTruong', cookieKey: 'pwa_exam_truong', label: 'Tên Trường / Đơn vị' },
+  { id: 'inpKiKiemTra', cookieKey: 'pwa_exam_ki_kiem_tra', label: 'Kì kiểm tra / Đợt thi' },
+  { id: 'inpNamHoc', cookieKey: 'pwa_exam_nam_hoc', label: 'Năm học' },
+  { id: 'inpMon', cookieKey: 'pwa_exam_mon', label: 'Môn thi' },
+  { id: 'inpThoiGian', cookieKey: 'pwa_exam_thoi_gian', label: 'Thời gian làm bài' }
+];
+
+/**
+ * Khởi tạo tính năng Cache Cookie và Warning cho Thông tin đầu đề thi
+ * - Nếu user đã nhập trước đó: Điền sẵn từ cookie/storage và ẩn warning.
+ * - Nếu user chưa nhập trước đó: Để trống với hint placeholder và hiện warning.
+ * - Lắng nghe sự kiện gõ phím để cache ngay lập tức và tự động cập nhật cảnh báo real-time.
+ */
+function initHeaderInfoCacheAndValidation() {
+  const noticeBanner = document.getElementById('headerWarningNotice');
+
+  // 1. Nạp dữ liệu đã lưu từ cookie/storage nếu có
+  HEADER_FIELDS_CONFIG.forEach(field => {
+    const input = document.getElementById(field.id);
+    if (!input) return;
+
+    const cachedVal = getCookie(field.cookieKey);
+    if (cachedVal && cachedVal.trim().length > 0) {
+      input.value = cachedVal;
+    }
+  });
+
+  // 2. Cập nhật giao diện cảnh báo (warning badge trên từng ô & banner chung)
+  function updateValidationUI() {
+    let emptyCount = 0;
+
+    HEADER_FIELDS_CONFIG.forEach(field => {
+      const input = document.getElementById(field.id);
+      const warnTag = document.getElementById(`warn_${field.id}`);
+      if (!input) return;
+
+      const val = input.value.trim();
+      if (val.length === 0) {
+        emptyCount++;
+        input.classList.add('input-warning');
+        if (warnTag) warnTag.classList.remove('hidden');
+      } else {
+        input.classList.remove('input-warning');
+        if (warnTag) warnTag.classList.add('hidden');
+      }
+    });
+
+    if (noticeBanner) {
+      if (emptyCount > 0) {
+        noticeBanner.classList.remove('hidden');
+      } else {
+        noticeBanner.classList.add('hidden');
+      }
     }
   }
 
-  // Đồng bộ màu thanh tiêu đề trình duyệt (Word Blue cho Light, Dark Navy cho Dark)
-  const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-  if (metaThemeColor) {
-    metaThemeColor.setAttribute('content', theme === 'dark' ? '#090d16' : '#185abd');
-  }
+  // 3. Lắng nghe real-time khi user gõ để tự động lưu cookie và tắt warning
+  HEADER_FIELDS_CONFIG.forEach(field => {
+    const input = document.getElementById(field.id);
+    if (!input) return;
+
+    input.addEventListener('input', () => {
+      const val = input.value.trim();
+      setCookie(field.cookieKey, val, 365);
+      updateValidationUI();
+    });
+
+    input.addEventListener('change', () => {
+      const val = input.value.trim();
+      setCookie(field.cookieKey, val, 365);
+      updateValidationUI();
+    });
+  });
+
+  // Gán hàm cập nhật vào window để các module khác có thể kích hoạt khi cần
+  window.updateHeaderValidationUI = updateValidationUI;
+
+  // Chạy kiểm tra ngay khi nạp trang
+  updateValidationUI();
 }
 
 /**
@@ -2457,6 +2572,7 @@ async function loadSampleExamDocx(silent = false) {
     const file = new File([blob], 'mau_de_thi_co_marker.docx', {
       type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     });
+    file.isSample = true;
     await handleFileLoaded(file);
     if (!silent) {
       showSnackbar('Đã nạp đề thi mẫu thử nghiệm thành công!');
@@ -2718,6 +2834,5 @@ function initEventListeners() {
     });
   }
 }
-
 
 })();
