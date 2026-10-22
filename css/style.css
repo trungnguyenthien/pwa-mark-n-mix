@@ -1830,3 +1830,380 @@ input:checked + .slider::before {
   border: 1px solid #d2d0ce;
 }
 
+/* ==========================================================================
+   Mobile Responsive System (Tối ưu hoàn hảo cho điện thoại & tablet)
+   ========================================================================== */
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+@media (max-width: 680px) {
+  /* Header trên điện thoại: gọn gàng, không tràn, không rớt dòng */
+  .app-header {
+    padding: 10px 12px;
+    gap: 8px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .header-brand {
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .brand-logo {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm, 6px);
+    flex-shrink: 0;
+  }
+
+  .brand-logo svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .brand-info {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .brand-title {
+    font-size: 0.95rem;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .brand-subtitle {
+    display: none !important;
+  }
+
+  .net-status-pill {
+    padding: 3px 5px;
+    gap: 0;
+    flex-shrink: 0;
+  }
+
+  .net-status-pill .status-text {
+    display: none !important;
+  }
+
+  .header-actions {
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .header-actions .btn-sm {
+    padding: 5px 8px;
+    font-size: 0.78rem;
+    height: 32px;
+  }
+
+  #btnUpdateApp .btn-label {
+    display: none !important;
+  }
+
+  /* Khung chính & Card trên màn hình nhỏ */
+  .main-container {
+    padding: 12px 10px 80px 10px;
+    gap: 14px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
+  .section-card {
+    padding: 16px 12px;
+    border-radius: 10px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
+  /* Tiêu đề Section & Nút nạp mẫu xếp tầng gọn gàng */
+  .section-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .section-title-group {
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .section-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-sm, 6px);
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    font-size: 1rem;
+    line-height: 1.35;
+  }
+
+  .section-desc {
+    font-size: 0.8125rem;
+    line-height: 1.4;
+  }
+
+  .upload-header-actions {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .upload-header-actions .btn {
+    width: 100%;
+    justify-content: center;
+    height: 38px;
+    font-size: 0.8125rem;
+  }
+
+  /* Vùng kéo thả file Dropzone */
+  .dropzone {
+    padding: 24px 14px;
+    border-radius: var(--radius-md, 10px);
+  }
+
+  .dropzone-icon-circle {
+    width: 46px;
+    height: 46px;
+    margin-bottom: 8px;
+  }
+
+  .dropzone-text h3 {
+    font-size: 0.9375rem;
+  }
+
+  .dropzone-text p {
+    font-size: 0.8rem;
+  }
+
+  /* Thẻ thông tin file nạp */
+  .loaded-file-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .loaded-file-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .file-name-row {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .file-name {
+    font-size: 0.875rem;
+  }
+
+  .file-meta-row {
+    flex-wrap: wrap;
+    font-size: 0.75rem;
+    gap: 4px;
+  }
+
+  #btnChangeFile {
+    width: 100%;
+    justify-content: center;
+    border: 1px solid var(--border-medium);
+  }
+
+  /* Form Thông Tin Đầu Đề Thi: 1 cột, font-size 16px chống tự zoom iOS */
+  .form-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+
+  .form-input {
+    font-size: 16px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm, 6px);
+  }
+
+  .form-label-row {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .field-warning-tag {
+    font-size: 0.7rem;
+    padding: 1px 6px;
+  }
+
+  .header-warning-notice {
+    padding: 8px 10px;
+    font-size: 0.78rem;
+    gap: 8px;
+  }
+
+  /* Phần Cấu Hình Đề Thi */
+  .option-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding-bottom: 12px;
+  }
+
+  .segmented-control {
+    width: 100%;
+    display: flex;
+  }
+
+  .segment-item {
+    flex: 1;
+    text-align: center;
+  }
+
+  .segment-item span {
+    width: 100%;
+    justify-content: center;
+    display: inline-flex;
+    font-size: 0.8125rem;
+    padding: 6px 4px;
+  }
+
+  .stepper-box {
+    align-self: flex-start;
+  }
+
+  .exam-codes-container {
+    gap: 6px;
+  }
+
+  .code-chip {
+    padding: 4px 8px;
+    font-size: 0.8125rem;
+  }
+
+  /* Khung Xem Trước Đề Thi */
+  .preview-group-header {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 10px;
+    font-size: 0.8125rem;
+  }
+
+  .preview-questions-list {
+    padding: 10px 8px;
+    gap: 10px;
+  }
+
+  .question-card {
+    padding: 12px 10px;
+  }
+
+  .question-title-row {
+    gap: 8px;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+
+  .answers-grid {
+    padding-left: 0;
+    gap: 8px;
+  }
+
+  .answer-item {
+    gap: 8px;
+    font-size: 0.9375rem;
+  }
+
+  .ans-pill {
+    font-size: 0.72rem;
+    height: 20px;
+    line-height: 20px;
+    padding: 1px 6px;
+  }
+
+  /* Ảnh hiển thị co dãn an toàn trên điện thoại */
+  .exam-img-frame {
+    max-width: 100% !important;
+  }
+
+  .exam-preview-img {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Nút Trộn Đề Thi dưới cùng */
+  .action-footer {
+    padding: 12px 10px;
+    width: 100%;
+  }
+
+  .btn-mix {
+    width: 100%;
+    min-width: 0 !important;
+    max-width: 100%;
+    height: 48px;
+    font-size: 1rem;
+    border-radius: 10px;
+  }
+
+  /* Hộp thoại Dialog Modal */
+  .modal-backdrop {
+    padding: 8px;
+  }
+
+  .modal-panel {
+    width: 100%;
+    max-height: 92vh;
+    border-radius: 10px;
+  }
+
+  .modal-header {
+    padding: 12px 14px;
+  }
+
+  .modal-body {
+    padding: 14px 12px;
+  }
+
+  .modal-footer {
+    padding: 12px 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .modal-footer .btn {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .matrix-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 400px) {
+  .brand-title {
+    font-size: 0.875rem;
+  }
+
+  #btnUpdateApp .btn-label {
+    display: none;
+  }
+}
+
+
