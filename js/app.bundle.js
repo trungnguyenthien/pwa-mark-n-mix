@@ -287,9 +287,21 @@ async function extractTextFromDocx(file) {
       }
     }
 
-    // Gỡ bỏ tag format nếu marker bị vô tình bọc trong bold/italic
+    // 1. Gộp các cặp thẻ định dạng liền kề cùng loại do Word tách run: </b><b>, </i><i>, </u><u>
+    let prevMerge;
+    do {
+      prevMerge = pText;
+      pText = pText.replace(/<\/([biu])>\s*<\1>/gi, '');
+    } while (pText !== prevMerge);
+
+    // 2. Gỡ bỏ tag format nếu marker bị bọc trong bold/italic
     pText = pText.replace(/<([biu])>\s*(__[A-Za-z0-9#]+__)\s*<\/\1>/gi, '$2');
     pText = pText.replace(/<([biu])>\s*(<([biu])>\s*(__[A-Za-z0-9#]+__)\s*<\/\3>)\s*<\/\1>/gi, '$4');
+
+    // 3. Nếu marker nằm dính ở đầu hoặc cuối thẻ định dạng, tách marker ra ngoài để đảm bảo tính độc lập
+    pText = pText.replace(/<([biu])>(\s*)(__[A-Za-z0-9#]+__)/gi, '$3<$1>$2');
+    pText = pText.replace(/(__[A-Za-z0-9#]+__)(\s*)<\/([biu])>/gi, '</$3>$2$1');
+    pText = pText.replace(/<([biu])>\s*<\/\1>/gi, '');
 
     if (pText.trim()) {
       lines.push(pText.trim());
