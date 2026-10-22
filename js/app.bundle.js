@@ -145,6 +145,7 @@ async function extractTextFromDocx(file) {
   // 2. Phân tích cú pháp XML của Word, xử lý từng đoạn văn <w:p>
   const pRegex = /<w:p(?:\s[^>]*)?>([\s\S]*?)<\/w:p>/g;
   const lines = [];
+  const nonInlineImages = [];
   let pMatch;
   let imgCounter = 0;
 
@@ -153,7 +154,10 @@ async function extractTextFromDocx(file) {
 
     // Trích xuất hình ảnh DrawingML (<w:drawing>) và thay thế bằng token [IMG:instanceId]
     pContent = pContent.replace(/<w:drawing[\s\S]*?<\/w:drawing>/gi, (drawingXml) => {
+      const isInline = /<wp:inline[\s>]/i.test(drawingXml);
+      const isAnchor = /<wp:anchor[\s>]/i.test(drawingXml);
       const blipMatch = drawingXml.match(/r:(?:embed|link)="([^"]+)"/i);
+
       if (blipMatch) {
         const rId = blipMatch[1];
         const extMatch = drawingXml.match(/<wp:extent\s+cx="(\d+)"\s+cy="(\d+)"/i) || drawingXml.match(/<a:ext\s+cx="(\d+)"\s+cy="(\d+)"/i);
@@ -181,6 +185,43 @@ async function extractTextFromDocx(file) {
             imageMap[rId].height = finalH;
           }
         }
+
+        // Kiểm tra xem ảnh có phải là In Line with Text hay không
+        if (isAnchor || !isInline) {
+          let wrapType = 'Nổi tự do (Floating)';
+          if (/<wp:wrapSquare/i.test(drawingXml)) {
+            wrapType = 'Square (Vuông bao quanh)';
+          } else if (/<wp:wrapTight/i.test(drawingXml)) {
+            wrapType = 'Tight (Bao sát văn bản)';
+          } else if (/<wp:wrapThrough/i.test(drawingXml)) {
+            wrapType = 'Through (Xuyên qua)';
+          } else if (/<wp:wrapTopAndBottom/i.test(drawingXml)) {
+            wrapType = 'Top and Bottom (Trên và dưới)';
+          } else if (/<wp:wrapNone/i.test(drawingXml) || /behindDoc="1"/i.test(drawingXml)) {
+            const behind = /behindDoc="1"/i.test(drawingXml);
+            wrapType = behind ? 'Behind Text (Nằm dưới chữ)' : 'In Front of Text (Nằm trên chữ)';
+          }
+
+          const docPrName = drawingXml.match(/<wp:docPr\s+[^>]*name="([^"]+)"/i);
+          const docPrTitle = drawingXml.match(/<wp:docPr\s+[^>]*title="([^"]+)"/i);
+          const docPrDescr = drawingXml.match(/<wp:docPr\s+[^>]*descr="([^"]+)"/i);
+          const imgName = (docPrTitle && docPrTitle[1]) || (docPrName && docPrName[1]) || (docPrDescr && docPrDescr[1]) || `Hình ảnh ${imgCounter}`;
+
+          const rawTextInParagraph = pContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+          const snippet = rawTextInParagraph.length > 70
+            ? rawTextInParagraph.substring(0, 70) + '...'
+            : (rawTextInParagraph || 'Ảnh nằm trên đoạn văn bản riêng');
+
+          nonInlineImages.push({
+            id: instanceId,
+            name: imgName,
+            rId,
+            wrapType,
+            snippet,
+            dataUrl: (imageMap[rId] && imageMap[rId].dataUrl) ? imageMap[rId].dataUrl : ''
+          });
+        }
+
         return ` [IMG:${instanceId}] `;
       }
       return '';
@@ -232,6 +273,23 @@ async function extractTextFromDocx(file) {
             imageMap[rId].height = finalH;
           }
         }
+        // Kiểm tra nếu pict là dạng nổi (VML floating)
+        const isFloatingVml = /position\s*:\s*absolute/i.test(pictXml) || /mso-wrap-style/i.test(pictXml) || /mso-position/i.test(pictXml);
+        if (isFloatingVml) {
+          const rawTextInParagraph = pContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+          const snippet = rawTextInParagraph.length > 70
+            ? rawTextInParagraph.substring(0, 70) + '...'
+            : (rawTextInParagraph || 'Ảnh nằm trên đoạn văn bản riêng');
+          nonInlineImages.push({
+            id: instanceId,
+            name: `Ảnh vẽ VML ${imgCounter}`,
+            rId,
+            wrapType: 'VML Floating (Ảnh vẽ nổi tự do)',
+            snippet,
+            dataUrl: (imageMap[rId] && imageMap[rId].dataUrl) ? imageMap[rId].dataUrl : ''
+          });
+        }
+
         return ` [IMG:${instanceId}] `;
       }
       return '';
@@ -311,8 +369,26 @@ async function extractTextFromDocx(file) {
   const rawExtracted = lines.join('\n');
   return {
     rawText: rawExtracted,
-    imageMap
+    imageMap,
+    nonInlineImages
   };
+}
+
+/**
+ * Kiểm tra xem một dòng có phải là dòng phân cách kết thúc đề thi / lời dặn cuối đề hay không
+ * Ví dụ: "----------------------- HẾT ĐỀ KIỂM TRA -----------------------", "--- HẾT ---", "HẾT."
+ */
+function isEndOfExamLine(line) {
+  if (!line) return false;
+  const plain = line.replace(/<[^>]+>/g, '').trim();
+  if (!plain) return false;
+  // Dòng kẻ gạch ngang: ------------------, ==================
+  if (/^[-–—=_*~]{3,}$/.test(plain)) return true;
+  // Dòng chứa chữ HẾT: "--- HẾT ---", "HẾT ĐỀ KIỂM TRA", "- HẾT -", "HẾT", "HẾT ĐỀ THI", "HẾT."
+  if (/^[-–—=_*~.\s]*(?:HẾT|THE\s+END)(?:\s+(?:ĐỀ|BÀI)?\s*(?:THI|KIỂM\s+TRA)?)?[-–—=_*~.\s]*$/i.test(plain)) return true;
+  // Lời dặn giám thị / thí sinh ở cuối đề: "Cán bộ coi thi không giải thích gì thêm", "Giám thị không giải thích gì thêm", "Thí sinh không được sử dụng tài liệu"
+  if (/^(?:Ghi\s+chú\s*:\s*)?(?:Thí\s+sinh\s+không\s+được|Cán\s+bộ\s+coi\s+thi|Giám\s+thị\s+không)/i.test(plain)) return true;
+  return false;
 }
 
 /**
@@ -376,6 +452,11 @@ function normalizeMarkedText(rawText) {
     }
   }
 
+  // Loại bỏ các dòng kết thúc đề thi ở cuối file (ví dụ "--- HẾT ---", "HẾT ĐỀ KIỂM TRA")
+  while (cleanedLines.length > 0 && isEndOfExamLine(cleanedLines[cleanedLines.length - 1])) {
+    cleanedLines.pop();
+  }
+
   // Nếu không tìm thấy marker ở đầu (ví dụ các marker viết dính liền trên 1 dòng)
   if (cleanedLines.length === 0 && rawText.includes('__QUESTION__')) {
     const separated = rawText
@@ -404,7 +485,7 @@ async function readExamDocx(file) {
   const fileName = (file && file.name) ? file.name : 'De_Thi.docx';
   const fileSize = file.size || 0;
 
-  const { rawText, imageMap } = await extractTextFromDocx(file);
+  const { rawText, imageMap, nonInlineImages } = await extractTextFromDocx(file);
   const normalized = normalizeMarkedText(rawText);
 
   return {
@@ -412,7 +493,8 @@ async function readExamDocx(file) {
     extractedHeader: normalized.extractedHeader || {},
     fileName,
     fileSize,
-    imageMap: imageMap || {}
+    imageMap: imageMap || {},
+    nonInlineImages: nonInlineImages || []
   };
 }
 
@@ -474,6 +556,23 @@ function parseMarkerToken(token) {
 }
 
 /**
+ * Kiểm tra xem một dòng có phải là dòng phân cách kết thúc đề thi / lời dặn cuối đề hay không
+ * Ví dụ: "----------------------- HẾT ĐỀ KIỂM TRA -----------------------", "--- HẾT ---", "HẾT."
+ */
+function isEndOfExamLine(line) {
+  if (!line) return false;
+  const plain = line.replace(/<[^>]+>/g, '').trim();
+  if (!plain) return false;
+  // Dòng kẻ gạch ngang: ------------------, ==================
+  if (/^[-–—=_*~]{3,}$/.test(plain)) return true;
+  // Dòng chứa chữ HẾT: "--- HẾT ---", "HẾT ĐỀ KIỂM TRA", "- HẾT -", "HẾT", "HẾT ĐỀ THI", "HẾT."
+  if (/^[-–—=_*~.\s]*(?:HẾT|THE\s+END)(?:\s+(?:ĐỀ|BÀI)?\s*(?:THI|KIỂM\s+TRA)?)?[-–—=_*~.\s]*$/i.test(plain)) return true;
+  // Lời dặn giám thị / thí sinh ở cuối đề: "Cán bộ coi thi không giải thích gì thêm", "Giám thị không giải thích gì thêm", "Thí sinh không được sử dụng tài liệu"
+  if (/^(?:Ghi\s+chú\s*:\s*)?(?:Thí\s+sinh\s+không\s+được|Cán\s+bộ\s+coi\s+thi|Giám\s+thị\s+không)/i.test(plain)) return true;
+  return false;
+}
+
+/**
  * Phân tích văn bản chứa marker thành cấu trúc đề thi
  * @param {string} rawText
  * @returns {Object} { valid: boolean, errors: Array, groups: Array, stats: Object }
@@ -497,6 +596,11 @@ function parseExam(rawText) {
 
     // Bỏ qua dòng trống
     if (!trimmedLine) continue;
+
+    // Bỏ qua các dòng phân cách kết thúc đề thi (ví dụ "--- HẾT ---", "HẾT ĐỀ KIỂM TRA")
+    if (hasMetFirstQuestion && isEndOfExamLine(trimmedLine)) {
+      continue;
+    }
 
     // Tìm tất cả marker có dạng __...__ trên dòng (marker chỉ gồm chữ, số và ký tự #)
     const markerMatches = [...rawLine.matchAll(/__([A-Za-z0-9#]+)__/g)];
@@ -702,6 +806,22 @@ function parseExam(rawText) {
     }
   }
 
+  // Hậu kiểm làm sạch các câu hỏi và đáp án nếu có dòng kết thúc đề bám vào
+  for (const g of groups) {
+    for (const q of g.questions) {
+      if (q.text) {
+        const qLines = q.text.split(/\r?\n/).filter(l => !isEndOfExamLine(l));
+        q.text = qLines.join('\n').trim();
+      }
+      for (const a of q.answers) {
+        if (a.text) {
+          const aLines = a.text.split(/\r?\n/).filter(l => !isEndOfExamLine(l));
+          a.text = aLines.join('\n').trim();
+        }
+      }
+    }
+  }
+
   // Đảm bảo có ít nhất 1 câu hỏi
   if (allQuestions.length === 0 && errors.length === 0) {
     errors.push({
@@ -842,6 +962,142 @@ function getAnswerLabel(index, style = 'ABCD') {
 }
 
 /**
+ * Danh sách 20 chữ số La Mã cho tối đa 20 phần
+ */
+const ROMAN_NUMERALS = [
+  'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X',
+  'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX'
+];
+
+/**
+ * Chuyển đổi số thứ tự (1-based) sang số La Mã (I, II, ..., XX)
+ * @param {number} n
+ * @returns {string}
+ */
+function toRoman(n) {
+  if (n >= 1 && n <= 20) return ROMAN_NUMERALS[n - 1];
+  return String(n);
+}
+
+/**
+ * Nhận diện dòng tiêu đề là IN HOA toàn bộ hay viết bình thường
+ * @param {string} text
+ * @returns {boolean} true nếu là IN HOA toàn bộ, false nếu viết bình thường
+ */
+function isTitleUpperCase(text) {
+  if (!text) return true;
+
+  // 1. Nếu có tiền tố PHẦN / Phần sẵn có, ưu tiên theo case của tiền tố đó
+  const prefixMatch = text.match(/(?:^|\s|<[^>]+>)(PHẦN|Phần|phần)\b/);
+  if (prefixMatch) {
+    return prefixMatch[1] === prefixMatch[1].toUpperCase();
+  }
+
+  // 2. Lấy nội dung chữ thuần (loại bỏ toàn bộ thẻ HTML và token ảnh)
+  const clean = text.replace(/<[^>]+>/g, '').replace(/\[IMG:[^\]]+\]/g, '').trim();
+  if (!clean) return true;
+
+  // 3. Trích xuất tất cả chữ cái (hỗ trợ cả tiếng Việt có dấu)
+  const allLetters = clean.replace(/[^a-zA-Zà-ỹÀ-Ỹ]/g, '');
+  if (!allLetters) return true;
+  if (allLetters === allLetters.toUpperCase()) return true;
+
+  // 4. Nếu toàn bộ dòng có lẫn chữ thường (ví dụ: "CÂU TRẮC NGHIỆM: Thí sinh chọn..."),
+  // kiểm tra cụm từ tiêu đề chính (trước dấu hai chấm hoặc dấu gạch ngang)
+  const headingPart = clean.split(/[:\-\–\—]/)[0].trim();
+  const headingLetters = headingPart.replace(/[^a-zA-Zà-ỹÀ-Ỹ]/g, '');
+  if (headingLetters && headingLetters.length >= 3 && headingLetters === headingLetters.toUpperCase()) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Định dạng dòng đầu tiên của tiêu đề nhóm, tự động thêm hoặc cập nhật tiền tố "PHẦN I." / "Phần I."
+ * Tự động nhận diện chính xác kiểu chữ (IN HOA vs Viết thường) và giữ nguyên các định dạng (bold <b>, italic <i>, underline <u>).
+ *
+ * @param {string} line Dòng đầu tiên của tiêu đề nhóm
+ * @param {string} roman Chữ số La Mã (I, II, III, ..., XX)
+ * @returns {string} Dòng tiêu đề đã được thêm hoặc cập nhật tiền tố
+ */
+function formatGroupTitleFirstLine(line, roman) {
+  if (!line || !line.trim()) return `PHẦN ${roman}.`;
+  const trimmed = line.trim();
+
+  // Xác định tiền tố là "PHẦN" (IN HOA) hay "Phần" (Viết bình thường)
+  const isUpper = isTitleUpperCase(trimmed);
+  const prefixWord = isUpper ? 'PHẦN' : 'Phần';
+  const targetPrefix = `${prefixWord} ${roman}.`;
+
+  // TH1: Tiền tố PHẦN nằm độc lập trong các thẻ định dạng riêng ở đầu dòng
+  // Ví dụ: <b>PHẦN I.</b> Tiêu đề... hoặc <b><i>PHẦN I:</i></b> ... hoặc <u><b>PHẦN 1</b></u>: ...
+  const isolatedPrefixRegex = /^((?:<[a-z0-9]+[^>]*>\s*)+)\s*(?:PHẦN|Phần|phần)\s+(?:[IVXLCDM]+|[0-9]+)[\.\:\-]?\s*((?:<\/[a-z0-9]+>\s*)+)(?:[\.\:\-]?\s*)(.*)$/i;
+  const isolatedMatch = trimmed.match(isolatedPrefixRegex);
+  if (isolatedMatch) {
+    const openTags = isolatedMatch[1].trim();
+    const closeTags = isolatedMatch[2].trim();
+    const rest = isolatedMatch[3].trim();
+    return rest
+      ? `${openTags}${targetPrefix}${closeTags} ${rest}`
+      : `${openTags}${targetPrefix}${closeTags}`;
+  }
+
+  // TH2: Tiền tố PHẦN nằm chung thẻ với nội dung phía sau
+  // Ví dụ: <b>PHẦN I. CÂU TRẮC NGHIỆM...</b> hoặc <b><i>PHẦN I: CÂU TRẮC NGHIỆM...</i></b>
+  const sharedPrefixRegex = /^((?:<[a-z0-9]+[^>]*>\s*)+)\s*(?:PHẦN|Phần|phần)\s+(?:[IVXLCDM]+|[0-9]+)[\.\:\-]?\s*(.*)$/i;
+  const sharedMatch = trimmed.match(sharedPrefixRegex);
+  if (sharedMatch) {
+    const openTags = sharedMatch[1];
+    const rest = sharedMatch[2].trim();
+    return rest
+      ? `${openTags}${targetPrefix} ${rest}`
+      : `${openTags}${targetPrefix}`;
+  }
+
+  // TH3: Tiền tố PHẦN dạng văn bản thuần ở đầu dòng (không có thẻ bao quanh tiền tố)
+  // Ví dụ: 'PHẦN I. CÂU TRẮC NGHIỆM...' hoặc 'Phần 1: Câu trắc nghiệm...'
+  const plainPrefixRegex = /^(?:PHẦN|Phần|phần)\s+(?:[IVXLCDM]+|[0-9]+)[\.\:\-]?\s*(.*)$/i;
+  const plainMatch = trimmed.match(plainPrefixRegex);
+  if (plainMatch) {
+    const rest = plainMatch[1].trim();
+    return rest ? `${targetPrefix} ${rest}` : targetPrefix;
+  }
+
+  // TH4: Trong nội dung gốc CHƯA CÓ "PHẦN I." -> Tự động chèn thêm
+  // 4a. Dòng bắt đầu bằng các thẻ định dạng (bold <b>, italic <i>, underline <u> hoặc lồng nhau)
+  // Ví dụ: <b>CÂU TRẮC NGHIỆM...</b> -> <b>PHẦN I. CÂU TRẮC NGHIỆM...</b>
+  // Ví dụ: <b><i><u>CÂU HỎI...</u></i></b> -> <b><i><u>PHẦN I. CÂU HỎI...</u></i></b>
+  const openTagsMatch = trimmed.match(/^((?:<[a-z0-9]+[^>]*>\s*)+)(.*)$/i);
+  if (openTagsMatch) {
+    const openTags = openTagsMatch[1];
+    const rest = openTagsMatch[2].trim();
+    return rest
+      ? `${openTags}${targetPrefix} ${rest}`
+      : `${openTags}${targetPrefix}`;
+  }
+
+  // 4b. Dòng văn bản thuần không có thẻ ở đầu
+  // Ví dụ: 'CÂU TRẮC NGHIỆM...' -> 'PHẦN I. CÂU TRẮC NGHIỆM...'
+  // Ví dụ: 'Câu hỏi trắc nghiệm...' -> 'Phần I. Câu hỏi trắc nghiệm...'
+  return `${targetPrefix} ${trimmed}`;
+}
+
+/**
+ * Định dạng toàn bộ tiêu đề nhóm, gắn tiền tố "PHẦN {roman}." vào dòng đầu tiên
+ * @param {string} title Nội dung tiêu đề nhóm
+ * @param {number} groupIndex Thứ tự nhóm (1-based: 1, 2, 3...)
+ * @returns {string} Tiêu đề đã được định dạng
+ */
+function formatGroupTitle(title, groupIndex) {
+  if (!title || !title.trim()) return '';
+  const roman = toRoman(groupIndex);
+  const lines = title.trim().split(/\r?\n/);
+  lines[0] = formatGroupTitleFirstLine(lines[0], roman);
+  return lines.join('\n');
+}
+
+/**
  * Hoán vị một đề thi với mã đề và seed cụ thể
  * @param {Object} parsedExam Kết quả từ parser
  * @param {string} examCode Mã đề (ví dụ '101')
@@ -934,8 +1190,14 @@ function shuffleExamForCode(parsedExam, examCode, options = {}) {
       flatQuestions.push(processedQuestion);
     }
 
+    let groupTitle = group.title;
+    if (groupTitle && groupTitle.trim()) {
+      groupTitle = formatGroupTitle(groupTitle, shuffledGroups.length + 1);
+    }
+
     shuffledGroups.push({
       ...group,
+      title: groupTitle,
       labelStyle,
       questions: finalGroupQuestions
     });
@@ -1005,6 +1267,8 @@ function shuffleAllExams(parsedExam, examCodes, options = {}) {
  * - Nhãn đáp án theo định dạng đã chọn (A. B. C. D. / a) b) c) d) / 1. 2. 3. 4.).
  * - Câu trả lời ngắn (chỉ có __D__) không hiển thị đáp án trong đề thi.
  */
+
+
 
 function getDocx() {
   if (typeof window !== 'undefined' && window.docx) {
@@ -1397,10 +1661,14 @@ async function createExamDocxBlob(shuffledExam, headerInfo = {}, options = {}) {
 
     // Xuất phần tiêu đề nhóm (nằm giữa marker nhóm và __QUESTION__) nếu có
     if (group.title && group.title.trim()) {
+      const roman = toRoman(gIdx + 1);
       const titleLines = group.title.trim().split(/\r?\n/);
       titleLines.forEach((tLine, tIdx) => {
-        const trimmedTLine = tLine.trim();
+        let trimmedTLine = tLine.trim();
         if (!trimmedTLine) return;
+        if (tIdx === 0) {
+          trimmedTLine = formatGroupTitleFirstLine(trimmedTLine, roman);
+        }
         const titleRuns = [];
         appendContentRuns(titleRuns, trimmedTLine, false, COLOR_BLACK);
 
@@ -1566,6 +1834,21 @@ function getDocx() {
 }
 
 /**
+ * Làm sạch văn bản đáp án hiển thị trong Bảng Đáp Án Ma Trận
+ * - Bỏ toàn bộ thẻ HTML như <b>, </b>, <i>, </i>, <u>, </u>
+ * - Bỏ các dòng kết thúc đề thi nếu có
+ */
+function cleanAnswerText(text) {
+  if (!text) return '';
+  let cleaned = text;
+  // Bỏ các dòng kết đề nếu có
+  cleaned = cleaned.replace(/[-–—=_*~.\s]*(?:HẾT|THE\s+END)(?:\s+(?:ĐỀ|BÀI)?\s*(?:THI|KIỂM\s+TRA)?)?[-–—=_*~.\s]*/gi, '');
+  // Loại bỏ các thẻ HTML như <b>, </b>, <i>, </i>, <u>, </u>
+  cleaned = cleaned.replace(/<[^>]+>/g, '').trim();
+  return cleaned;
+}
+
+/**
  * Trích xuất giá trị đáp án đúng của một câu hỏi đã hoán vị
  * @param {Object} q Câu hỏi đã hoán vị
  * @returns {string} Chuỗi hiển thị đáp án
@@ -1575,7 +1858,7 @@ function extractQuestionAnswerKey(q) {
 
   // 1. Câu trả lời ngắn (chỉ có 1 __D__ và không có __S__)
   if (q.type === 'short_answer' || (q.answers.length === 1 && correctAnswers.length === 1)) {
-    return correctAnswers[0].text.trim();
+    return cleanAnswerText(correctAnswers[0].text);
   }
 
   // 2. Định dạng nhãn a) b) c) d) cho câu đúng/sai nhiều ý
@@ -2043,11 +2326,11 @@ function renderExamPreview(parsedExam) {
     const modeBadge = group.mode || 'G';
     const isFixedGroup = group.fixed;
     const modeDesc = {
-      'G': 'Đổi cả câu hỏi & đáp án',
-      'GQ': 'Chỉ đổi câu hỏi',
-      'GA': 'Chỉ đổi đáp án',
+      'G': 'Mix cả câu hỏi & đáp án',
+      'GQ': 'Chỉ mix câu hỏi',
+      'GA': 'Chỉ mix đáp án',
       'G0': 'Không đảo vị trí'
-    }[modeBadge] || 'Hoán vị';
+    }[modeBadge] || 'Mix đề';
 
     html += `
       <div class="preview-group-box">
@@ -2063,7 +2346,7 @@ function renderExamPreview(parsedExam) {
         </div>
         ${group.title && group.title.trim() ? `
           <div class="preview-group-title" style="padding: 10px 16px; background: #f8fafc; border-bottom: 1px solid var(--border-light); font-size: 0.9375rem; color: #1e293b; line-height: 1.5; white-space: pre-line;">
-            ${renderFormattedContent(group.title.trim())}
+            ${renderFormattedContent(formatGroupTitle(group.title.trim(), gIdx + 1))}
           </div>
         ` : ''}
         <div class="preview-questions-list">
@@ -2201,15 +2484,66 @@ async function handleFileLoaded(file) {
     const btnMixAndExport = document.getElementById('btnMixAndExport');
     const txtFileStats = document.getElementById('txtFileStats');
 
+    // Kiểm tra định dạng hình ảnh (Chỉ hỗ trợ In Line with Text)
+    const nonInlineImages = result.nonInlineImages || [];
+    state.nonInlineImages = nonInlineImages;
+
+    const imageWarningBanner = document.getElementById('imageWarningBanner');
+    const imageWarningList = document.getElementById('imageWarningList');
+
+    if (imageWarningBanner && imageWarningList) {
+      if (nonInlineImages.length > 0) {
+        imageWarningBanner.classList.remove('hidden');
+        imageWarningList.innerHTML = nonInlineImages.map((img) => `
+          <li class="image-warning-item">
+            <div class="image-warning-thumb-box">
+              ${img.dataUrl
+                ? `<img src="${img.dataUrl}" alt="${escapeHtml(img.name)}" class="image-warning-thumb"/>`
+                : `<div class="image-warning-thumb-placeholder">📷</div>`}
+            </div>
+            <div class="image-warning-details">
+              <div class="image-warning-name-row">
+                <strong class="image-warning-name">${escapeHtml(img.name)}</strong>
+                <span class="badge" style="background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5;">
+                  Wrap Text hiện tại: ${escapeHtml(img.wrapType)}
+                </span>
+              </div>
+              <div class="image-warning-snippet">
+                <span class="snippet-label">Đoạn văn chứa ảnh:</span> "${escapeHtml(img.snippet)}"
+              </div>
+              <div class="image-warning-action-tip">
+                👉 Vui lòng mở file Word gốc ➔ Click chuột phải vào ảnh này ➔ <strong>Wrap Text</strong> ➔ Chọn <strong>In Line with Text</strong>.
+              </div>
+            </div>
+          </li>
+        `).join('');
+      } else {
+        imageWarningBanner.classList.add('hidden');
+        imageWarningList.innerHTML = '';
+      }
+    }
+
     if (!parsed.valid) {
+      const errorMsg = nonInlineImages.length > 0
+        ? `⚠ ${parsed.errors.length} lỗi cú pháp • ${nonInlineImages.length} ảnh sai InLine`
+        : `⚠ ${parsed.errors.length} lỗi cú pháp`;
       statusBadge.className = 'badge badge-danger';
-      statusBadge.textContent = `⚠ ${parsed.errors.length} lỗi cú pháp`;
+      statusBadge.textContent = errorMsg;
       errorBanner.classList.remove('hidden');
       errorList.innerHTML = parsed.errors.map(err => `<li>${escapeHtml(err.message)}</li>`).join('');
       btnMixAndExport.disabled = true;
-      txtFileStats.textContent = 'Phát hiện lỗi định dạng marker, hãy sửa theo hướng dẫn trên';
+      txtFileStats.textContent = 'Phát hiện lỗi cú pháp và định dạng, hãy sửa theo hướng dẫn trên';
       renderExamPreview(null);
       showSnackbar('Phát hiện lỗi cú pháp trong đề thi. Vui lòng kiểm tra!', 4000);
+    } else if (nonInlineImages.length > 0) {
+      statusBadge.className = 'badge badge-danger';
+      statusBadge.textContent = `⚠ ${nonInlineImages.length} ảnh không phải InLine`;
+      errorBanner.classList.add('hidden');
+      errorList.innerHTML = '';
+      btnMixAndExport.disabled = true;
+      txtFileStats.textContent = `Phát hiện ${nonInlineImages.length} ảnh không phải InLine. Cần sửa file gốc sang "In Line with Text" trước khi trộn.`;
+      renderExamPreview(parsed);
+      showSnackbar(`⚠️ Có ${nonInlineImages.length} ảnh không phải InLine! Vui lòng sửa lại file gốc.`, 5000);
     } else {
       statusBadge.className = 'badge badge-success';
       statusBadge.textContent = '✓ Hợp lệ';
@@ -2277,6 +2611,11 @@ async function executeMixAndExport() {
 
   const btnMix = document.getElementById('btnMixAndExport');
   const originalText = btnMix.innerHTML;
+
+  if (state.nonInlineImages && state.nonInlineImages.length > 0) {
+    showSnackbar(`⚠️ File còn ${state.nonInlineImages.length} hình ảnh chưa chuyển sang In Line with Text! Vui lòng chỉnh sửa file gốc.`, 5000);
+    return;
+  }
 
   try {
     btnMix.disabled = true;
@@ -2893,13 +3232,25 @@ function initEventListeners() {
   const btnCloseExportModal = document.getElementById('btnCloseExportModal');
   const btnCloseModalBtn = document.getElementById('btnCloseModalBtn');
 
+  const closeExportModal = () => {
+    if (exportModal) {
+      exportModal.classList.remove('active');
+    }
+  };
+
   [btnCloseExportModal, btnCloseModalBtn].forEach(btn => {
     if (btn) {
-      btn.addEventListener('click', () => {
-        exportModal.classList.remove('active');
-      });
+      btn.addEventListener('click', closeExportModal);
     }
   });
+
+  if (exportModal) {
+    exportModal.addEventListener('click', (e) => {
+      if (e.target === exportModal) {
+        closeExportModal();
+      }
+    });
+  }
 
   // Tải ZIP
   const btnDownloadZip = document.getElementById('btnDownloadZip');
@@ -2935,19 +3286,39 @@ function initEventListeners() {
   // iOS Safari Modal
   const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-  if (isIos && !isStandalone) {
-    const iosInstallModal = document.getElementById('iosInstallModal');
+  const iosInstallModal = document.getElementById('iosInstallModal');
+  if (isIos && !isStandalone && iosInstallModal) {
     const btnCloseIosModal = document.getElementById('btnCloseIosModal');
     const btnGotItIos = document.getElementById('btnGotItIos');
 
+    const closeIosModal = () => {
+      iosInstallModal.classList.remove('active');
+    };
+
     [btnCloseIosModal, btnGotItIos].forEach(b => {
       if (b) {
-        b.addEventListener('click', () => {
-          iosInstallModal.classList.remove('active');
-        });
+        b.addEventListener('click', closeIosModal);
+      }
+    });
+
+    iosInstallModal.addEventListener('click', (e) => {
+      if (e.target === iosInstallModal) {
+        closeIosModal();
       }
     });
   }
+
+  // Lắng nghe phím Escape để đóng các modal đang mở
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (exportModal && exportModal.classList.contains('active')) {
+        closeExportModal();
+      }
+      if (iosInstallModal && iosInstallModal.classList.contains('active')) {
+        iosInstallModal.classList.remove('active');
+      }
+    }
+  });
 
   // Image Lightbox xem phóng to và kiểm tra thông số ảnh
   const imageLightboxModal = document.getElementById('imageLightboxModal');

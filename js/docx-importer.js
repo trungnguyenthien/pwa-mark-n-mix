@@ -141,6 +141,7 @@ export async function extractTextFromDocx(file) {
   // 2. Phân tích cú pháp XML của Word, xử lý từng đoạn văn <w:p>
   const pRegex = /<w:p(?:\s[^>]*)?>([\s\S]*?)<\/w:p>/g;
   const lines = [];
+  const nonInlineImages = [];
   let pMatch;
   let imgCounter = 0;
 
@@ -149,7 +150,10 @@ export async function extractTextFromDocx(file) {
 
     // Trích xuất hình ảnh DrawingML (<w:drawing>) và thay thế bằng token [IMG:instanceId]
     pContent = pContent.replace(/<w:drawing[\s\S]*?<\/w:drawing>/gi, (drawingXml) => {
+      const isInline = /<wp:inline[\s>]/i.test(drawingXml);
+      const isAnchor = /<wp:anchor[\s>]/i.test(drawingXml);
       const blipMatch = drawingXml.match(/r:(?:embed|link)="([^"]+)"/i);
+
       if (blipMatch) {
         const rId = blipMatch[1];
         const extMatch = drawingXml.match(/<wp:extent\s+cx="(\d+)"\s+cy="(\d+)"/i) || drawingXml.match(/<a:ext\s+cx="(\d+)"\s+cy="(\d+)"/i);
@@ -177,6 +181,43 @@ export async function extractTextFromDocx(file) {
             imageMap[rId].height = finalH;
           }
         }
+
+        // Kiểm tra xem ảnh có phải là In Line with Text hay không
+        if (isAnchor || !isInline) {
+          let wrapType = 'Nổi tự do (Floating)';
+          if (/<wp:wrapSquare/i.test(drawingXml)) {
+            wrapType = 'Square (Vuông bao quanh)';
+          } else if (/<wp:wrapTight/i.test(drawingXml)) {
+            wrapType = 'Tight (Bao sát văn bản)';
+          } else if (/<wp:wrapThrough/i.test(drawingXml)) {
+            wrapType = 'Through (Xuyên qua)';
+          } else if (/<wp:wrapTopAndBottom/i.test(drawingXml)) {
+            wrapType = 'Top and Bottom (Trên và dưới)';
+          } else if (/<wp:wrapNone/i.test(drawingXml) || /behindDoc="1"/i.test(drawingXml)) {
+            const behind = /behindDoc="1"/i.test(drawingXml);
+            wrapType = behind ? 'Behind Text (Nằm dưới chữ)' : 'In Front of Text (Nằm trên chữ)';
+          }
+
+          const docPrName = drawingXml.match(/<wp:docPr\s+[^>]*name="([^"]+)"/i);
+          const docPrTitle = drawingXml.match(/<wp:docPr\s+[^>]*title="([^"]+)"/i);
+          const docPrDescr = drawingXml.match(/<wp:docPr\s+[^>]*descr="([^"]+)"/i);
+          const imgName = (docPrTitle && docPrTitle[1]) || (docPrName && docPrName[1]) || (docPrDescr && docPrDescr[1]) || `Hình ảnh ${imgCounter}`;
+
+          const rawTextInParagraph = pContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+          const snippet = rawTextInParagraph.length > 70
+            ? rawTextInParagraph.substring(0, 70) + '...'
+            : (rawTextInParagraph || 'Ảnh nằm trên đoạn văn bản riêng');
+
+          nonInlineImages.push({
+            id: instanceId,
+            name: imgName,
+            rId,
+            wrapType,
+            snippet,
+            dataUrl: (imageMap[rId] && imageMap[rId].dataUrl) ? imageMap[rId].dataUrl : ''
+          });
+        }
+
         return ` [IMG:${instanceId}] `;
       }
       return '';
@@ -228,6 +269,23 @@ export async function extractTextFromDocx(file) {
             imageMap[rId].height = finalH;
           }
         }
+        // Kiểm tra nếu pict là dạng nổi (VML floating)
+        const isFloatingVml = /position\s*:\s*absolute/i.test(pictXml) || /mso-wrap-style/i.test(pictXml) || /mso-position/i.test(pictXml);
+        if (isFloatingVml) {
+          const rawTextInParagraph = pContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+          const snippet = rawTextInParagraph.length > 70
+            ? rawTextInParagraph.substring(0, 70) + '...'
+            : (rawTextInParagraph || 'Ảnh nằm trên đoạn văn bản riêng');
+          nonInlineImages.push({
+            id: instanceId,
+            name: `Ảnh vẽ VML ${imgCounter}`,
+            rId,
+            wrapType: 'VML Floating (Ảnh vẽ nổi tự do)',
+            snippet,
+            dataUrl: (imageMap[rId] && imageMap[rId].dataUrl) ? imageMap[rId].dataUrl : ''
+          });
+        }
+
         return ` [IMG:${instanceId}] `;
       }
       return '';
@@ -307,8 +365,26 @@ export async function extractTextFromDocx(file) {
   const rawExtracted = lines.join('\n');
   return {
     rawText: rawExtracted,
-    imageMap
+    imageMap,
+    nonInlineImages
   };
+}
+
+/**
+ * Kiểm tra xem một dòng có phải là dòng phân cách kết thúc đề thi / lời dặn cuối đề hay không
+ * Ví dụ: "----------------------- HẾT ĐỀ KIỂM TRA -----------------------", "--- HẾT ---", "HẾT."
+ */
+export function isEndOfExamLine(line) {
+  if (!line) return false;
+  const plain = line.replace(/<[^>]+>/g, '').trim();
+  if (!plain) return false;
+  // Dòng kẻ gạch ngang: ------------------, ==================
+  if (/^[-–—=_*~]{3,}$/.test(plain)) return true;
+  // Dòng chứa chữ HẾT: "--- HẾT ---", "HẾT ĐỀ KIỂM TRA", "- HẾT -", "HẾT", "HẾT ĐỀ THI", "HẾT."
+  if (/^[-–—=_*~.\s]*(?:HẾT|THE\s+END)(?:\s+(?:ĐỀ|BÀI)?\s*(?:THI|KIỂM\s+TRA)?)?[-–—=_*~.\s]*$/i.test(plain)) return true;
+  // Lời dặn giám thị / thí sinh ở cuối đề: "Cán bộ coi thi không giải thích gì thêm", "Giám thị không giải thích gì thêm", "Thí sinh không được sử dụng tài liệu"
+  if (/^(?:Ghi\s+chú\s*:\s*)?(?:Thí\s+sinh\s+không\s+được|Cán\s+bộ\s+coi\s+thi|Giám\s+thị\s+không)/i.test(plain)) return true;
+  return false;
 }
 
 /**
@@ -372,6 +448,11 @@ export function normalizeMarkedText(rawText) {
     }
   }
 
+  // Loại bỏ các dòng kết thúc đề thi ở cuối file (ví dụ "--- HẾT ---", "HẾT ĐỀ KIỂM TRA")
+  while (cleanedLines.length > 0 && isEndOfExamLine(cleanedLines[cleanedLines.length - 1])) {
+    cleanedLines.pop();
+  }
+
   // Nếu không tìm thấy marker ở đầu (ví dụ các marker viết dính liền trên 1 dòng)
   if (cleanedLines.length === 0 && rawText.includes('__QUESTION__')) {
     const separated = rawText
@@ -400,7 +481,7 @@ export async function readExamDocx(file) {
   const fileName = (file && file.name) ? file.name : 'De_Thi.docx';
   const fileSize = file.size || 0;
 
-  const { rawText, imageMap } = await extractTextFromDocx(file);
+  const { rawText, imageMap, nonInlineImages } = await extractTextFromDocx(file);
   const normalized = normalizeMarkedText(rawText);
 
   return {
@@ -408,6 +489,7 @@ export async function readExamDocx(file) {
     extractedHeader: normalized.extractedHeader || {},
     fileName,
     fileSize,
-    imageMap: imageMap || {}
+    imageMap: imageMap || {},
+    nonInlineImages: nonInlineImages || []
   };
 }

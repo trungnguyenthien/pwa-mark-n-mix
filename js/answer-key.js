@@ -22,6 +22,21 @@ function getDocx() {
 }
 
 /**
+ * Làm sạch văn bản đáp án hiển thị trong Bảng Đáp Án Ma Trận
+ * - Bỏ toàn bộ thẻ HTML như <b>, </b>, <i>, </i>, <u>, </u>
+ * - Bỏ các dòng kết thúc đề thi nếu có
+ */
+export function cleanAnswerText(text) {
+  if (!text) return '';
+  let cleaned = text;
+  // Bỏ các dòng kết đề nếu có
+  cleaned = cleaned.replace(/[-–—=_*~.\s]*(?:HẾT|THE\s+END)(?:\s+(?:ĐỀ|BÀI)?\s*(?:THI|KIỂM\s+TRA)?)?[-–—=_*~.\s]*/gi, '');
+  // Loại bỏ các thẻ HTML như <b>, </b>, <i>, </i>, <u>, </u>
+  cleaned = cleaned.replace(/<[^>]+>/g, '').trim();
+  return cleaned;
+}
+
+/**
  * Trích xuất giá trị đáp án đúng của một câu hỏi đã hoán vị
  * @param {Object} q Câu hỏi đã hoán vị
  * @returns {string} Chuỗi hiển thị đáp án
@@ -31,7 +46,7 @@ export function extractQuestionAnswerKey(q) {
 
   // 1. Câu trả lời ngắn (chỉ có 1 __D__ và không có __S__)
   if (q.type === 'short_answer' || (q.answers.length === 1 && correctAnswers.length === 1)) {
-    return correctAnswers[0].text.trim();
+    return cleanAnswerText(correctAnswers[0].text);
   }
 
   // 2. Định dạng nhãn a) b) c) d) cho câu đúng/sai nhiều ý

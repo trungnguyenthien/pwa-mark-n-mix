@@ -443,13 +443,25 @@ function initEventListeners() {
   const btnCloseExportModal = document.getElementById('btnCloseExportModal');
   const btnCloseModalBtn = document.getElementById('btnCloseModalBtn');
 
+  const closeExportModal = () => {
+    if (exportModal) {
+      exportModal.classList.remove('active');
+    }
+  };
+
   [btnCloseExportModal, btnCloseModalBtn].forEach(btn => {
     if (btn) {
-      btn.addEventListener('click', () => {
-        exportModal.classList.remove('active');
-      });
+      btn.addEventListener('click', closeExportModal);
     }
   });
+
+  if (exportModal) {
+    exportModal.addEventListener('click', (e) => {
+      if (e.target === exportModal) {
+        closeExportModal();
+      }
+    });
+  }
 
   // Tải ZIP
   const btnDownloadZip = document.getElementById('btnDownloadZip');
@@ -485,19 +497,39 @@ function initEventListeners() {
   // iOS Safari Modal
   const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-  if (isIos && !isStandalone) {
-    const iosInstallModal = document.getElementById('iosInstallModal');
+  const iosInstallModal = document.getElementById('iosInstallModal');
+  if (isIos && !isStandalone && iosInstallModal) {
     const btnCloseIosModal = document.getElementById('btnCloseIosModal');
     const btnGotItIos = document.getElementById('btnGotItIos');
 
+    const closeIosModal = () => {
+      iosInstallModal.classList.remove('active');
+    };
+
     [btnCloseIosModal, btnGotItIos].forEach(b => {
       if (b) {
-        b.addEventListener('click', () => {
-          iosInstallModal.classList.remove('active');
-        });
+        b.addEventListener('click', closeIosModal);
+      }
+    });
+
+    iosInstallModal.addEventListener('click', (e) => {
+      if (e.target === iosInstallModal) {
+        closeIosModal();
       }
     });
   }
+
+  // Lắng nghe phím Escape để đóng các modal đang mở
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (exportModal && exportModal.classList.contains('active')) {
+        closeExportModal();
+      }
+      if (iosInstallModal && iosInstallModal.classList.contains('active')) {
+        iosInstallModal.classList.remove('active');
+      }
+    }
+  });
 
   // Image Lightbox xem phóng to và kiểm tra thông số ảnh
   const imageLightboxModal = document.getElementById('imageLightboxModal');

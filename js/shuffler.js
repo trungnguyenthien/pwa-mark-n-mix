@@ -115,6 +115,142 @@ export function getAnswerLabel(index, style = 'ABCD') {
 }
 
 /**
+ * Danh sách 20 chữ số La Mã cho tối đa 20 phần
+ */
+export const ROMAN_NUMERALS = [
+  'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X',
+  'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX'
+];
+
+/**
+ * Chuyển đổi số thứ tự (1-based) sang số La Mã (I, II, ..., XX)
+ * @param {number} n
+ * @returns {string}
+ */
+export function toRoman(n) {
+  if (n >= 1 && n <= 20) return ROMAN_NUMERALS[n - 1];
+  return String(n);
+}
+
+/**
+ * Nhận diện dòng tiêu đề là IN HOA toàn bộ hay viết bình thường
+ * @param {string} text
+ * @returns {boolean} true nếu là IN HOA toàn bộ, false nếu viết bình thường
+ */
+export function isTitleUpperCase(text) {
+  if (!text) return true;
+
+  // 1. Nếu có tiền tố PHẦN / Phần sẵn có, ưu tiên theo case của tiền tố đó
+  const prefixMatch = text.match(/(?:^|\s|<[^>]+>)(PHẦN|Phần|phần)\b/);
+  if (prefixMatch) {
+    return prefixMatch[1] === prefixMatch[1].toUpperCase();
+  }
+
+  // 2. Lấy nội dung chữ thuần (loại bỏ toàn bộ thẻ HTML và token ảnh)
+  const clean = text.replace(/<[^>]+>/g, '').replace(/\[IMG:[^\]]+\]/g, '').trim();
+  if (!clean) return true;
+
+  // 3. Trích xuất tất cả chữ cái (hỗ trợ cả tiếng Việt có dấu)
+  const allLetters = clean.replace(/[^a-zA-Zà-ỹÀ-Ỹ]/g, '');
+  if (!allLetters) return true;
+  if (allLetters === allLetters.toUpperCase()) return true;
+
+  // 4. Nếu toàn bộ dòng có lẫn chữ thường (ví dụ: "CÂU TRẮC NGHIỆM: Thí sinh chọn..."),
+  // kiểm tra cụm từ tiêu đề chính (trước dấu hai chấm hoặc dấu gạch ngang)
+  const headingPart = clean.split(/[:\-\–\—]/)[0].trim();
+  const headingLetters = headingPart.replace(/[^a-zA-Zà-ỹÀ-Ỹ]/g, '');
+  if (headingLetters && headingLetters.length >= 3 && headingLetters === headingLetters.toUpperCase()) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Định dạng dòng đầu tiên của tiêu đề nhóm, tự động thêm hoặc cập nhật tiền tố "PHẦN I." / "Phần I."
+ * Tự động nhận diện chính xác kiểu chữ (IN HOA vs Viết thường) và giữ nguyên các định dạng (bold <b>, italic <i>, underline <u>).
+ *
+ * @param {string} line Dòng đầu tiên của tiêu đề nhóm
+ * @param {string} roman Chữ số La Mã (I, II, III, ..., XX)
+ * @returns {string} Dòng tiêu đề đã được thêm hoặc cập nhật tiền tố
+ */
+export function formatGroupTitleFirstLine(line, roman) {
+  if (!line || !line.trim()) return `PHẦN ${roman}.`;
+  const trimmed = line.trim();
+
+  // Xác định tiền tố là "PHẦN" (IN HOA) hay "Phần" (Viết bình thường)
+  const isUpper = isTitleUpperCase(trimmed);
+  const prefixWord = isUpper ? 'PHẦN' : 'Phần';
+  const targetPrefix = `${prefixWord} ${roman}.`;
+
+  // TH1: Tiền tố PHẦN nằm độc lập trong các thẻ định dạng riêng ở đầu dòng
+  // Ví dụ: <b>PHẦN I.</b> Tiêu đề... hoặc <b><i>PHẦN I:</i></b> ... hoặc <u><b>PHẦN 1</b></u>: ...
+  const isolatedPrefixRegex = /^((?:<[a-z0-9]+[^>]*>\s*)+)\s*(?:PHẦN|Phần|phần)\s+(?:[IVXLCDM]+|[0-9]+)[\.\:\-]?\s*((?:<\/[a-z0-9]+>\s*)+)(?:[\.\:\-]?\s*)(.*)$/i;
+  const isolatedMatch = trimmed.match(isolatedPrefixRegex);
+  if (isolatedMatch) {
+    const openTags = isolatedMatch[1].trim();
+    const closeTags = isolatedMatch[2].trim();
+    const rest = isolatedMatch[3].trim();
+    return rest
+      ? `${openTags}${targetPrefix}${closeTags} ${rest}`
+      : `${openTags}${targetPrefix}${closeTags}`;
+  }
+
+  // TH2: Tiền tố PHẦN nằm chung thẻ với nội dung phía sau
+  // Ví dụ: <b>PHẦN I. CÂU TRẮC NGHIỆM...</b> hoặc <b><i>PHẦN I: CÂU TRẮC NGHIỆM...</i></b>
+  const sharedPrefixRegex = /^((?:<[a-z0-9]+[^>]*>\s*)+)\s*(?:PHẦN|Phần|phần)\s+(?:[IVXLCDM]+|[0-9]+)[\.\:\-]?\s*(.*)$/i;
+  const sharedMatch = trimmed.match(sharedPrefixRegex);
+  if (sharedMatch) {
+    const openTags = sharedMatch[1];
+    const rest = sharedMatch[2].trim();
+    return rest
+      ? `${openTags}${targetPrefix} ${rest}`
+      : `${openTags}${targetPrefix}`;
+  }
+
+  // TH3: Tiền tố PHẦN dạng văn bản thuần ở đầu dòng (không có thẻ bao quanh tiền tố)
+  // Ví dụ: 'PHẦN I. CÂU TRẮC NGHIỆM...' hoặc 'Phần 1: Câu trắc nghiệm...'
+  const plainPrefixRegex = /^(?:PHẦN|Phần|phần)\s+(?:[IVXLCDM]+|[0-9]+)[\.\:\-]?\s*(.*)$/i;
+  const plainMatch = trimmed.match(plainPrefixRegex);
+  if (plainMatch) {
+    const rest = plainMatch[1].trim();
+    return rest ? `${targetPrefix} ${rest}` : targetPrefix;
+  }
+
+  // TH4: Trong nội dung gốc CHƯA CÓ "PHẦN I." -> Tự động chèn thêm
+  // 4a. Dòng bắt đầu bằng các thẻ định dạng (bold <b>, italic <i>, underline <u> hoặc lồng nhau)
+  // Ví dụ: <b>CÂU TRẮC NGHIỆM...</b> -> <b>PHẦN I. CÂU TRẮC NGHIỆM...</b>
+  // Ví dụ: <b><i><u>CÂU HỎI...</u></i></b> -> <b><i><u>PHẦN I. CÂU HỎI...</u></i></b>
+  const openTagsMatch = trimmed.match(/^((?:<[a-z0-9]+[^>]*>\s*)+)(.*)$/i);
+  if (openTagsMatch) {
+    const openTags = openTagsMatch[1];
+    const rest = openTagsMatch[2].trim();
+    return rest
+      ? `${openTags}${targetPrefix} ${rest}`
+      : `${openTags}${targetPrefix}`;
+  }
+
+  // 4b. Dòng văn bản thuần không có thẻ ở đầu
+  // Ví dụ: 'CÂU TRẮC NGHIỆM...' -> 'PHẦN I. CÂU TRẮC NGHIỆM...'
+  // Ví dụ: 'Câu hỏi trắc nghiệm...' -> 'Phần I. Câu hỏi trắc nghiệm...'
+  return `${targetPrefix} ${trimmed}`;
+}
+
+/**
+ * Định dạng toàn bộ tiêu đề nhóm, gắn tiền tố "PHẦN {roman}." vào dòng đầu tiên
+ * @param {string} title Nội dung tiêu đề nhóm
+ * @param {number} groupIndex Thứ tự nhóm (1-based: 1, 2, 3...)
+ * @returns {string} Tiêu đề đã được định dạng
+ */
+export function formatGroupTitle(title, groupIndex) {
+  if (!title || !title.trim()) return '';
+  const roman = toRoman(groupIndex);
+  const lines = title.trim().split(/\r?\n/);
+  lines[0] = formatGroupTitleFirstLine(lines[0], roman);
+  return lines.join('\n');
+}
+
+/**
  * Hoán vị một đề thi với mã đề và seed cụ thể
  * @param {Object} parsedExam Kết quả từ parser
  * @param {string} examCode Mã đề (ví dụ '101')
@@ -207,8 +343,14 @@ export function shuffleExamForCode(parsedExam, examCode, options = {}) {
       flatQuestions.push(processedQuestion);
     }
 
+    let groupTitle = group.title;
+    if (groupTitle && groupTitle.trim()) {
+      groupTitle = formatGroupTitle(groupTitle, shuffledGroups.length + 1);
+    }
+
     shuffledGroups.push({
       ...group,
+      title: groupTitle,
       labelStyle,
       questions: finalGroupQuestions
     });

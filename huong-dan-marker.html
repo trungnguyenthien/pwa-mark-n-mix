@@ -528,17 +528,17 @@ __D__ 90</pre>
           <tbody>
             <tr>
               <td><span class="marker-badge-code marker-code-g">__G__</span></td>
-              <td><strong>Hoán vị CẢ câu &amp; đáp án</strong></td>
-              <td>Chế độ mặc định phổ biến nhất. Đảo cả thứ tự câu hỏi và thứ tự các phương án A, B, C, D.</td>
+              <td><strong>Mix CẢ câu &amp; đáp án</strong></td>
+              <td>Chế độ mặc định phổ biến nhất. Mix cả thứ tự câu hỏi và thứ tự các phương án A, B, C, D.</td>
             </tr>
             <tr>
               <td><span class="marker-badge-code marker-code-g">__GQ__</span></td>
-              <td><strong>Chỉ đảo CÂU HỎI</strong></td>
+              <td><strong>Chỉ mix CÂU HỎI</strong></td>
               <td>Giữ nguyên thứ tự các đáp án bên trong (thường dùng cho câu hỏi Đúng/Sai hoặc bài tập có thứ tự ý cố định).</td>
             </tr>
             <tr>
               <td><span class="marker-badge-code marker-code-g">__GA__</span></td>
-              <td><strong>Chỉ đảo ĐÁP ÁN</strong></td>
+              <td><strong>Chỉ mix ĐÁP ÁN</strong></td>
               <td>Giữ nguyên thứ tự câu hỏi (câu 1, 2, 3 giữ nguyên vị trí), chỉ hoán vị phương án đáp án.</td>
             </tr>
             <tr>
@@ -552,15 +552,16 @@ __D__ 90</pre>
 
       <h3 style="font-size: 1.0625rem; color: #1e293b; margin: 24px 0 8px 0;">Tiêu đề và hướng dẫn riêng của từng nhóm (Group Title)</h3>
       <p style="color: #64748b; font-size: 0.875rem; margin: 0 0 10px 0;">
-        Toàn bộ nội dung văn bản nằm giữa marker nhóm (ví dụ <code>__G__</code>) và <code>__QUESTION__</code> đầu tiên sẽ tự động được nhận diện là <strong>tiêu đề / lời dặn của nhóm</strong>. Tiêu đề này sẽ luôn xuất hiện trang trọng ở đầu nhóm trước các câu hỏi trong mọi mã đề thi sau khi trộn:
+        Toàn bộ nội dung văn bản nằm giữa marker nhóm (ví dụ <code>__G__</code>) và <code>__QUESTION__</code> đầu tiên sẽ tự động được nhận diện là <strong>tiêu đề / lời dặn của nhóm</strong>.
+        <br/><strong style="color: #0284c7;">⚡ Tự động đánh số phần:</strong> Trong file gốc, bạn <strong>không cần gõ chữ "PHẦN I."</strong>. Công cụ sẽ tự động thêm tiền tố theo thứ tự số La Mã (<code>PHẦN I.</code>, <code>PHẦN II.</code>, <code>PHẦN III.</code>,... tối đa 20 phần) tương ứng với thứ tự xuất hiện của từng nhóm trong mỗi mã đề sau khi trộn.
       </p>
       <div class="example-box">
         <div class="example-box-header">
-          <span>Ví dụ tiêu đề nhóm trong file Word</span>
+          <span>Ví dụ tiêu đề nhóm trong file Word gốc (không cần ghi PHẦN I.)</span>
           <button class="btn-copy-code" onclick="copySnippet(this)">Sao chép</button>
         </div>
         <pre class="example-code">__G__
-PHẦN I. CÂU TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN (3,0 ĐIỂM)
+CÂU TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN (3,0 ĐIỂM)
 Thí sinh trả lời từ câu 1 đến câu 12. Mỗi câu hỏi thí sinh chỉ chọn một phương án.
 __QUESTION__
 Trong cuộc Cách mạng công nghiệp lần thứ tư hiện nay...</pre>
@@ -620,13 +621,24 @@ __G#__   (hoặc __#G__)  -> Các câu và đáp án bên trong vẫn đảo, nh
           </p>
         </div>
 
-        <div style="background: #f8fafc; border: 1px solid var(--border-medium); border-radius: 6px; padding: 14px 16px;">
-          <h4 style="margin: 0 0 6px 0; color: #1e293b; font-size: 0.9375rem; display: flex; align-items: center; gap: 8px;">
-            <span style="color: #107c41;">✓</span> Giữ nguyên 100% hình ảnh inline, bảng biểu và định dạng Word
+        <div id="sec-hinh-anh-inline" style="background: #fffbeb; border: 1px solid #fde68a; border-left: 4px solid #f59e0b; border-radius: 6px; padding: 16px 18px;">
+          <h4 style="margin: 0 0 8px 0; color: #92400e; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+            <span>⚠️</span> QUY ĐỊNH HÌNH ẢNH: Chỉ hỗ trợ định dạng "In Line with Text"
           </h4>
-          <p style="margin: 0; color: #64748b; font-size: 0.875rem;">
-            Mọi hình vẽ, đồ thị, sơ đồ nằm trong câu hỏi hoặc trong từng phương án đáp án đều được trích xuất nguyên tỉ lệ và tái hiện chính xác trong từng đề thi sau khi trộn.
+          <p style="margin: 0 0 10px 0; color: #78350f; font-size: 0.875rem; line-height: 1.55;">
+            Khi trộn đề thi, các câu hỏi và đáp án sẽ bị hoán đổi vị trí liên tục. Nếu hình ảnh ở dạng <strong>Floating (Square, Tight, Behind Text, In Front of Text,...)</strong>, Word sẽ neo ảnh vào tọa độ cố định của trang giấy khiến ảnh <strong>bị nhảy lung tung hoặc đè lên chữ của câu khác</strong>.
+            <br/>Do đó, <strong>công cụ chỉ hỗ trợ hình ảnh ở định dạng In Line with Text</strong> (ảnh nằm cùng dòng với văn bản để luôn đi liền với câu hỏi đó).
           </p>
+          <div style="background: #ffffff; border: 1px solid #fef08a; border-radius: 6px; padding: 12px 14px; font-size: 0.84rem; color: #1e293b;">
+            <strong style="color: #b45309;">Cách kiểm tra và đổi sang In Line with Text trong Word:</strong>
+            <ol style="margin: 6px 0 0 0; padding-left: 20px; line-height: 1.6; color: #334155;">
+              <li>Mở file Word gốc đề thi của bạn.</li>
+              <li>Nhấp chuột phải vào hình ảnh (hoặc nhấp chọn ảnh ➔ mở tab <strong>Picture Format</strong> trên thanh Ribbon).</li>
+              <li>Chọn menu <strong>Wrap Text</strong> (hoặc <em>Ngắt dòng văn bản</em>).</li>
+              <li>Chọn tùy chọn đầu tiên: <strong>In Line with Text</strong> (hoặc <em>Nằm trên cùng dòng với văn bản</em>).</li>
+              <li>Nhấn <strong>Ctrl + S</strong> để lưu file và nạp lại vào công cụ trộn đề.</li>
+            </ol>
+          </div>
         </div>
       </div>
     </section>

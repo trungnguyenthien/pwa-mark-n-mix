@@ -197,6 +197,57 @@
             </div>
             <ul id="errorList" class="error-list"></ul>
           </div>
+
+          <!-- Thông báo cảnh báo ảnh không phải InLine -->
+          <div id="imageWarningBanner" class="image-warning-banner hidden" role="alert">
+            <div class="image-warning-header">
+              <div class="image-warning-icon-wrap">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+              </div>
+              <div class="image-warning-title-wrap">
+                <div class="image-warning-title">Chỉ hỗ trợ ảnh "In Line with Text" — Phát hiện ảnh cần chỉnh sửa trong file gốc!</div>
+                <div class="image-warning-desc">
+                  Công cụ <strong>chỉ hỗ trợ hình ảnh ở định dạng In Line with Text</strong> (cùng dòng với văn bản). Các ảnh dạng nổi (<em>Square, Tight, Behind Text, In Front of Text...</em>) sẽ bị lệch sai câu hỏi khi xáo trộn. Vui lòng mở lại file Word gốc và chỉnh ảnh sang <strong>In Line with Text</strong>.
+                </div>
+              </div>
+            </div>
+
+            <div class="image-warning-body">
+              <div class="image-warning-list-title">Danh sách hình ảnh cần chuyển sang In Line with Text:</div>
+              <ul id="imageWarningList" class="image-warning-list"></ul>
+
+              <div class="image-warning-guide-card">
+                <div class="guide-card-head">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                  </svg>
+                  <strong>Cách sửa nhanh trong Microsoft Word:</strong>
+                </div>
+                <ol class="guide-steps-list">
+                  <li>Mở file Word gốc trên máy tính của bạn.</li>
+                  <li>Nhấp chuột phải vào từng hình ảnh trong danh sách trên (hoặc chọn ảnh ➔ tab <strong>Picture Format</strong>).</li>
+                  <li>Chọn menu <strong>Wrap Text</strong> (hoặc <em>Ngắt dòng văn bản</em>) ➔ chọn tùy chọn đầu tiên: <strong>In Line with Text</strong>.</li>
+                  <li>Nhấn <strong>Ctrl + S</strong> (Save) để lưu file, sau đó nạp lại vào công cụ này.</li>
+                </ol>
+                <div class="guide-tip-footer">
+                  <a href="./huong-dan-marker.html#sec-hinh-anh-inline" target="_blank" class="btn-guide-link">
+                    <span>Xem hướng dẫn chi tiết có hình ảnh minh họa</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                      <polyline points="15 3 21 3 21 9"></polyline>
+                      <line x1="10" y1="14" x2="21" y2="3"></line>
+                    </svg>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -464,8 +515,8 @@
               <p class="modal-subtitle">Đã tạo xong các file đề thi Word và Bảng đáp án ma trận</p>
             </div>
           </div>
-          <button id="btnCloseExportModal" class="btn-icon" aria-label="Đóng hộp thoại">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <button id="btnCloseExportModal" class="btn-icon modal-close-btn" aria-label="Đóng hộp thoại" title="Đóng hộp thoại (Esc)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
@@ -512,7 +563,13 @@
             </svg>
             <span>Chia sẻ Tệp (Mobile)</span>
           </button>
-          <button id="btnCloseModalBtn" class="btn btn-ghost" type="button">Đóng</button>
+          <button id="btnCloseModalBtn" class="btn btn-secondary" type="button" title="Đóng hộp thoại">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            <span>Đóng</span>
+          </button>
         </div>
       </div>
     </div>
@@ -522,8 +579,8 @@
       <div class="modal-panel modal-panel-sm">
         <div class="modal-header">
           <h3 id="iosModalTitle" class="modal-title">Cài đặt trên iPhone / iPad</h3>
-          <button id="btnCloseIosModal" class="btn-icon" aria-label="Đóng">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <button id="btnCloseIosModal" class="btn-icon modal-close-btn" aria-label="Đóng" title="Đóng">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
@@ -551,8 +608,8 @@
             <h3 class="modal-title" id="lightboxTitle">Chi Tiết Hình Ảnh Đề Thi</h3>
             <p class="modal-subtitle" id="lightboxMeta">Frame hiển thị và kích thước độ phân giải gốc</p>
           </div>
-          <button id="btnCloseLightbox" class="btn-icon" aria-label="Đóng xem ảnh">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <button id="btnCloseLightbox" class="btn-icon modal-close-btn" aria-label="Đóng xem ảnh" title="Đóng xem ảnh (Esc)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>

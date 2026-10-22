@@ -11,6 +11,8 @@
  * - Câu trả lời ngắn (chỉ có __D__) không hiển thị đáp án trong đề thi.
  */
 
+import { toRoman, formatGroupTitleFirstLine } from './shuffler.js';
+
 function getDocx() {
   if (typeof window !== 'undefined' && window.docx) {
     return window.docx;
@@ -402,10 +404,14 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}, options 
 
     // Xuất phần tiêu đề nhóm (nằm giữa marker nhóm và __QUESTION__) nếu có
     if (group.title && group.title.trim()) {
+      const roman = toRoman(gIdx + 1);
       const titleLines = group.title.trim().split(/\r?\n/);
       titleLines.forEach((tLine, tIdx) => {
-        const trimmedTLine = tLine.trim();
+        let trimmedTLine = tLine.trim();
         if (!trimmedTLine) return;
+        if (tIdx === 0) {
+          trimmedTLine = formatGroupTitleFirstLine(trimmedTLine, roman);
+        }
         const titleRuns = [];
         appendContentRuns(titleRuns, trimmedTLine, false, COLOR_BLACK);
 

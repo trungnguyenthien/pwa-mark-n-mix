@@ -598,6 +598,197 @@ body {
 }
 
 /* ==========================================================================
+   Image Warning Banner (Non-InLine Images)
+   ========================================================================== */
+.image-warning-banner {
+  margin-top: 16px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-left: 4px solid #f59e0b;
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  color: #1e293b;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.08);
+}
+
+.image-warning-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.image-warning-icon-wrap {
+  background: #fef3c7;
+  color: #d97706;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.image-warning-title-wrap {
+  flex: 1;
+}
+
+.image-warning-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #92400e;
+  margin-bottom: 4px;
+}
+
+.image-warning-desc {
+  font-size: 0.875rem;
+  color: #78350f;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.image-warning-list-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #b45309;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 14px 0 8px 0;
+}
+
+.image-warning-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 14px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.image-warning-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #ffffff;
+  border: 1px solid #fef08a;
+  border-radius: 8px;
+  padding: 10px 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.image-warning-thumb-box {
+  width: 54px;
+  height: 54px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.image-warning-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-warning-thumb-placeholder {
+  font-size: 1.3rem;
+}
+
+.image-warning-details {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.image-warning-name-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.image-warning-name {
+  font-size: 0.875rem;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.image-warning-snippet {
+  font-size: 0.8125rem;
+  color: #475569;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.snippet-label {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.image-warning-action-tip {
+  font-size: 0.775rem;
+  color: #b45309;
+  font-weight: 500;
+}
+
+.image-warning-guide-card {
+  background: rgba(254, 243, 199, 0.6);
+  border: 1px dashed #f59e0b;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 0.84rem;
+}
+
+.guide-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #92400e;
+  font-size: 0.875rem;
+  margin-bottom: 6px;
+}
+
+.guide-steps-list {
+  margin: 0;
+  padding-left: 20px;
+  color: #78350f;
+  line-height: 1.6;
+}
+
+.guide-steps-list li {
+  margin-bottom: 3px;
+}
+
+.guide-tip-footer {
+  margin-top: 8px;
+  text-align: right;
+}
+
+.btn-guide-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #d97706;
+  text-decoration: underline;
+  transition: color 0.15s;
+}
+
+.btn-guide-link:hover {
+  color: #b45309;
+}
+
+/* ==========================================================================
    Two-Column Configuration Layout
    ========================================================================== */
 .config-grid {
@@ -1316,6 +1507,29 @@ input:checked + .slider::before {
   color: var(--text-secondary);
 }
 
+/* Nút Đóng Modal dạng tròn nổi bật */
+.modal-close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-surface-elevated, #242b35);
+  border: 1px solid var(--border-medium, rgba(255, 255, 255, 0.2));
+  color: var(--text-primary, #ffffff);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.modal-close-btn:hover {
+  background: var(--danger, #ef4444);
+  color: #ffffff;
+  border-color: var(--danger, #ef4444);
+  transform: rotate(90deg) scale(1.08);
+}
+
 .modal-body {
   padding: 24px;
   overflow-y: auto;
@@ -1540,25 +1754,48 @@ input:checked + .slider::before {
   box-shadow: 0 0 6px #4cd964;
 }
 
-[data-theme="light"] .btn-icon {
+/* Các nút trong App Header dạng Ribbon Microsoft Word */
+[data-theme="light"] .app-header .btn-icon {
   background: rgba(255, 255, 255, 0.16);
   border: 1px solid rgba(255, 255, 255, 0.3);
   color: #ffffff;
 }
 
-[data-theme="light"] .btn-icon:hover {
+[data-theme="light"] .app-header .btn-icon:hover {
   background: rgba(255, 255, 255, 0.28);
   color: #ffffff;
   border-color: rgba(255, 255, 255, 0.5);
 }
 
-[data-theme="light"] .btn-ghost {
+[data-theme="light"] .app-header .btn-ghost {
   color: #ffffff;
 }
 
-[data-theme="light"] .btn-ghost:hover:not(:disabled) {
+[data-theme="light"] .app-header .btn-ghost:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.2);
   color: #ffffff;
+}
+
+/* Các nút dạng icon và ghost thông thường trong giao diện sáng (Light Theme) */
+[data-theme="light"] .btn-icon {
+  background: #f3f2f1;
+  border: 1px solid #d2d0ce;
+  color: #323130;
+}
+
+[data-theme="light"] .btn-icon:hover {
+  background: #edebe9;
+  border-color: #8a8886;
+  color: #000000;
+}
+
+[data-theme="light"] .btn-ghost {
+  color: #323130;
+}
+
+[data-theme="light"] .btn-ghost:hover:not(:disabled) {
+  background: #edebe9;
+  color: #104a9e;
 }
 
 /* Các trang tài liệu / Thẻ bước (Mô phỏng tờ giấy Word trên Canvas) */
@@ -1779,6 +2016,20 @@ input:checked + .slider::before {
 [data-theme="light"] .modal-header {
   background: #faf9f8;
   border-bottom: 1px solid #edebe9;
+}
+
+[data-theme="light"] .modal-close-btn {
+  background: #f3f2f1;
+  border: 1px solid #c8c6c4;
+  color: #323130;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .modal-close-btn:hover {
+  background: #d13438;
+  border-color: #d13438;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(209, 52, 56, 0.35);
 }
 
 [data-theme="light"] .modal-footer {

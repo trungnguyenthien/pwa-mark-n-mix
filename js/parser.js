@@ -55,6 +55,23 @@ function parseMarkerToken(token) {
 }
 
 /**
+ * Kiểm tra xem một dòng có phải là dòng phân cách kết thúc đề thi / lời dặn cuối đề hay không
+ * Ví dụ: "----------------------- HẾT ĐỀ KIỂM TRA -----------------------", "--- HẾT ---", "HẾT."
+ */
+export function isEndOfExamLine(line) {
+  if (!line) return false;
+  const plain = line.replace(/<[^>]+>/g, '').trim();
+  if (!plain) return false;
+  // Dòng kẻ gạch ngang: ------------------, ==================
+  if (/^[-–—=_*~]{3,}$/.test(plain)) return true;
+  // Dòng chứa chữ HẾT: "--- HẾT ---", "HẾT ĐỀ KIỂM TRA", "- HẾT -", "HẾT", "HẾT ĐỀ THI", "HẾT."
+  if (/^[-–—=_*~.\s]*(?:HẾT|THE\s+END)(?:\s+(?:ĐỀ|BÀI)?\s*(?:THI|KIỂM\s+TRA)?)?[-–—=_*~.\s]*$/i.test(plain)) return true;
+  // Lời dặn giám thị / thí sinh ở cuối đề: "Cán bộ coi thi không giải thích gì thêm", "Giám thị không giải thích gì thêm", "Thí sinh không được sử dụng tài liệu"
+  if (/^(?:Ghi\s+chú\s*:\s*)?(?:Thí\s+sinh\s+không\s+được|Cán\s+bộ\s+coi\s+thi|Giám\s+thị\s+không)/i.test(plain)) return true;
+  return false;
+}
+
+/**
  * Phân tích văn bản chứa marker thành cấu trúc đề thi
  * @param {string} rawText
  * @returns {Object} { valid: boolean, errors: Array, groups: Array, stats: Object }
@@ -78,6 +95,11 @@ export function parseExam(rawText) {
 
     // Bỏ qua dòng trống
     if (!trimmedLine) continue;
+
+    // Bỏ qua các dòng phân cách kết thúc đề thi (ví dụ "--- HẾT ---", "HẾT ĐỀ KIỂM TRA")
+    if (hasMetFirstQuestion && isEndOfExamLine(trimmedLine)) {
+      continue;
+    }
 
     // Tìm tất cả marker có dạng __...__ trên dòng (marker chỉ gồm chữ, số và ký tự #)
     const markerMatches = [...rawLine.matchAll(/__([A-Za-z0-9#]+)__/g)];
@@ -279,6 +301,22 @@ export function parseExam(rawText) {
         // Lựa chọn đơn truyền thống (1 D, còn lại S)
         q.type = 'multiple_choice';
         choiceCount++;
+      }
+    }
+  }
+
+  // Hậu kiểm làm sạch các câu hỏi và đáp án nếu có dòng kết thúc đề bám vào
+  for (const g of groups) {
+    for (const q of g.questions) {
+      if (q.text) {
+        const qLines = q.text.split(/\r?\n/).filter(l => !isEndOfExamLine(l));
+        q.text = qLines.join('\n').trim();
+      }
+      for (const a of q.answers) {
+        if (a.text) {
+          const aLines = a.text.split(/\r?\n/).filter(l => !isEndOfExamLine(l));
+          a.text = aLines.join('\n').trim();
+        }
       }
     }
   }

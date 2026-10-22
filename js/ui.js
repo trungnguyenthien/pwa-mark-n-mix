@@ -6,7 +6,7 @@
 
 import { readExamDocx } from './docx-importer.js';
 import { parseExam } from './parser.js';
-import { shuffleAllExams } from './shuffler.js';
+import { shuffleAllExams, formatGroupTitle } from './shuffler.js';
 import { createExamDocxBlob } from './docx-builder.js';
 import { createAnswerKeyDocxBlob, buildAnswerMatrix } from './answer-key.js';
 
@@ -172,11 +172,11 @@ export function renderExamPreview(parsedExam) {
     const modeBadge = group.mode || 'G';
     const isFixedGroup = group.fixed;
     const modeDesc = {
-      'G': 'Đổi cả câu hỏi & đáp án',
-      'GQ': 'Chỉ đổi câu hỏi',
-      'GA': 'Chỉ đổi đáp án',
+      'G': 'Mix cả câu hỏi & đáp án',
+      'GQ': 'Chỉ mix câu hỏi',
+      'GA': 'Chỉ mix đáp án',
       'G0': 'Không đảo vị trí'
-    }[modeBadge] || 'Hoán vị';
+    }[modeBadge] || 'Mix đề';
 
     html += `
       <div class="preview-group-box">
@@ -192,7 +192,7 @@ export function renderExamPreview(parsedExam) {
         </div>
         ${group.title && group.title.trim() ? `
           <div class="preview-group-title" style="padding: 10px 16px; background: #f8fafc; border-bottom: 1px solid var(--border-light); font-size: 0.9375rem; color: #1e293b; line-height: 1.5; white-space: pre-line;">
-            ${renderFormattedContent(group.title.trim())}
+            ${renderFormattedContent(formatGroupTitle(group.title.trim(), gIdx + 1))}
           </div>
         ` : ''}
         <div class="preview-questions-list">
@@ -330,15 +330,66 @@ export async function handleFileLoaded(file) {
     const btnMixAndExport = document.getElementById('btnMixAndExport');
     const txtFileStats = document.getElementById('txtFileStats');
 
+    // Kiểm tra định dạng hình ảnh (Chỉ hỗ trợ In Line with Text)
+    const nonInlineImages = result.nonInlineImages || [];
+    state.nonInlineImages = nonInlineImages;
+
+    const imageWarningBanner = document.getElementById('imageWarningBanner');
+    const imageWarningList = document.getElementById('imageWarningList');
+
+    if (imageWarningBanner && imageWarningList) {
+      if (nonInlineImages.length > 0) {
+        imageWarningBanner.classList.remove('hidden');
+        imageWarningList.innerHTML = nonInlineImages.map((img) => `
+          <li class="image-warning-item">
+            <div class="image-warning-thumb-box">
+              ${img.dataUrl
+                ? `<img src="${img.dataUrl}" alt="${escapeHtml(img.name)}" class="image-warning-thumb"/>`
+                : `<div class="image-warning-thumb-placeholder">📷</div>`}
+            </div>
+            <div class="image-warning-details">
+              <div class="image-warning-name-row">
+                <strong class="image-warning-name">${escapeHtml(img.name)}</strong>
+                <span class="badge" style="background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5;">
+                  Wrap Text hiện tại: ${escapeHtml(img.wrapType)}
+                </span>
+              </div>
+              <div class="image-warning-snippet">
+                <span class="snippet-label">Đoạn văn chứa ảnh:</span> "${escapeHtml(img.snippet)}"
+              </div>
+              <div class="image-warning-action-tip">
+                👉 Vui lòng mở file Word gốc ➔ Click chuột phải vào ảnh này ➔ <strong>Wrap Text</strong> ➔ Chọn <strong>In Line with Text</strong>.
+              </div>
+            </div>
+          </li>
+        `).join('');
+      } else {
+        imageWarningBanner.classList.add('hidden');
+        imageWarningList.innerHTML = '';
+      }
+    }
+
     if (!parsed.valid) {
+      const errorMsg = nonInlineImages.length > 0
+        ? `⚠ ${parsed.errors.length} lỗi cú pháp • ${nonInlineImages.length} ảnh sai InLine`
+        : `⚠ ${parsed.errors.length} lỗi cú pháp`;
       statusBadge.className = 'badge badge-danger';
-      statusBadge.textContent = `⚠ ${parsed.errors.length} lỗi cú pháp`;
+      statusBadge.textContent = errorMsg;
       errorBanner.classList.remove('hidden');
       errorList.innerHTML = parsed.errors.map(err => `<li>${escapeHtml(err.message)}</li>`).join('');
       btnMixAndExport.disabled = true;
-      txtFileStats.textContent = 'Phát hiện lỗi định dạng marker, hãy sửa theo hướng dẫn trên';
+      txtFileStats.textContent = 'Phát hiện lỗi cú pháp và định dạng, hãy sửa theo hướng dẫn trên';
       renderExamPreview(null);
       showSnackbar('Phát hiện lỗi cú pháp trong đề thi. Vui lòng kiểm tra!', 4000);
+    } else if (nonInlineImages.length > 0) {
+      statusBadge.className = 'badge badge-danger';
+      statusBadge.textContent = `⚠ ${nonInlineImages.length} ảnh không phải InLine`;
+      errorBanner.classList.add('hidden');
+      errorList.innerHTML = '';
+      btnMixAndExport.disabled = true;
+      txtFileStats.textContent = `Phát hiện ${nonInlineImages.length} ảnh không phải InLine. Cần sửa file gốc sang "In Line with Text" trước khi trộn.`;
+      renderExamPreview(parsed);
+      showSnackbar(`⚠️ Có ${nonInlineImages.length} ảnh không phải InLine! Vui lòng sửa lại file gốc.`, 5000);
     } else {
       statusBadge.className = 'badge badge-success';
       statusBadge.textContent = '✓ Hợp lệ';
@@ -406,6 +457,11 @@ export async function executeMixAndExport() {
 
   const btnMix = document.getElementById('btnMixAndExport');
   const originalText = btnMix.innerHTML;
+
+  if (state.nonInlineImages && state.nonInlineImages.length > 0) {
+    showSnackbar(`⚠️ File còn ${state.nonInlineImages.length} hình ảnh chưa chuyển sang In Line with Text! Vui lòng chỉnh sửa file gốc.`, 5000);
+    return;
+  }
 
   try {
     btnMix.disabled = true;
