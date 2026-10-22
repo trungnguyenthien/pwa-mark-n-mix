@@ -425,24 +425,37 @@ export async function executeMixAndExport() {
 
     state.generatedFiles = [];
 
-    // 3. Tạo từng file Word cho mỗi mã đề
+    // 3. Tạo từng file Word cho mỗi mã đề (Đề thi & Đáp án chi tiết)
     for (const exam of shuffledExams) {
-      const docxBlob = await createExamDocxBlob(exam, headerInfo);
-      const fileName = `De_${exam.examCode}.docx`;
-      zip.file(fileName, docxBlob);
-      const url = URL.createObjectURL(docxBlob);
+      // 3.1 File Đề thi (học sinh làm, không hiển thị đáp án)
+      const docxBlob = await createExamDocxBlob(exam, headerInfo, { isAnswerKey: false });
+      const examFileName = `Đề_${exam.examCode}.docx`;
+      zip.file(examFileName, docxBlob);
+      const examUrl = URL.createObjectURL(docxBlob);
       state.generatedFiles.push({
-        name: fileName,
+        name: examFileName,
         blob: docxBlob,
-        url,
+        url: examUrl,
         isAnswerKey: false
+      });
+
+      // 3.2 File Đáp án chi tiết tương ứng (các câu đúng in đậm và có màu blue)
+      const answerDocxBlob = await createExamDocxBlob(exam, headerInfo, { isAnswerKey: true });
+      const answerFileName = `Đáp_Án_${exam.examCode}.docx`;
+      zip.file(answerFileName, answerDocxBlob);
+      const answerUrl = URL.createObjectURL(answerDocxBlob);
+      state.generatedFiles.push({
+        name: answerFileName,
+        blob: answerDocxBlob,
+        url: answerUrl,
+        isAnswerKey: true
       });
     }
 
-    // 4. Tạo file Word Bảng Đáp Án Ma Trận
+    // 4. Tạo file Word Bảng Đáp Án Ma Trận (tổng hợp tất cả các mã đề)
     const answerBlob = await createAnswerKeyDocxBlob(shuffledExams, headerInfo);
     const safeMon = (headerInfo.mon || 'Mon_Hoc').trim().replace(/[\s/\\:*?"<>|]+/g, '_') || 'Mon_Hoc';
-    const answerFileName = `Bang_Dap_An_${safeMon}.docx`;
+    const answerFileName = `Bảng_Đáp_Án_${safeMon}.docx`;
     zip.file(answerFileName, answerBlob);
     const answerUrl = URL.createObjectURL(answerBlob);
     state.generatedFiles.push({

@@ -403,6 +403,7 @@ async function readExamDocx(file) {
   };
 }
 
+
 // --- FILE: js/parser.js ---
 /**
  * Module Phân Tích Cú Pháp Marker Đề Thi (Parser)
@@ -705,6 +706,7 @@ function parseExam(rawText) {
   };
 }
 
+
 // --- FILE: js/shuffler.js ---
 /**
  * Module Hoán Vị Đề Thi (Shuffler)
@@ -971,6 +973,7 @@ function shuffleAllExams(parsedExam, examCodes, options = {}) {
   return result;
 }
 
+
 // --- FILE: js/docx-builder.js ---
 /**
  * Module Dựng File Word Đề Thi (Docx Builder)
@@ -996,12 +999,13 @@ function getDocx() {
 }
 
 /**
- * Tạo Blob file Word (.docx) cho một mã đề thi cụ thể
+ * Tạo Blob file Word (.docx) cho một mã đề thi cụ thể (hoặc file đáp án chi tiết tương ứng)
  * @param {Object} shuffledExam Đề thi đã hoán vị (từ shuffler)
  * @param {Object} headerInfo Thông tin đầu đề (7 ô nhập)
+ * @param {Object} options Tùy chọn xuất đề: { isAnswerKey: boolean }
  * @returns {Promise<Blob>}
  */
-async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
+async function createExamDocxBlob(shuffledExam, headerInfo = {}, options = {}) {
   const docx = getDocx();
   if (!docx) {
     throw new Error('Thư viện docx chưa được nạp!');
@@ -1032,10 +1036,12 @@ async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
     thoiGian = '45 phút'
   } = headerInfo;
 
+  const isAnswerKey = !!options.isAnswerKey;
   const examCode = shuffledExam.examCode;
   const FONT_FAMILY = 'Times New Roman';
   const COLOR_RED = 'FF0000';
   const COLOR_BLACK = '000000';
+  const COLOR_BLUE = '0000FF';
 
   // 1. Bảng đầu đề thi (1 hàng, 2 cột không viền)
   const headerTable = new Table({
@@ -1239,7 +1245,31 @@ async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
         size: 10
       }
     },
-    children: [
+    children: isAnswerKey ? [
+      new TextRun({
+        text: 'Họ và tên: ................................................................  ',
+        font: FONT_FAMILY,
+        size: 24
+      }),
+      new TextRun({
+        text: 'Số báo danh: .......................  ',
+        font: FONT_FAMILY,
+        size: 24
+      }),
+      new TextRun({
+        text: 'Mã đề ',
+        bold: true,
+        font: FONT_FAMILY,
+        size: 24
+      }),
+      new TextRun({
+        text: `${String(examCode)} (ĐÁP ÁN)`,
+        bold: true,
+        color: COLOR_BLUE,
+        font: FONT_FAMILY,
+        size: 24
+      })
+    ] : [
       new TextRun({
         text: 'Họ và tên: ................................................................  ',
         font: FONT_FAMILY,
@@ -1271,7 +1301,7 @@ async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
   const imageMap = shuffledExam.imageMap || headerInfo.imageMap || {};
 
   // Hàm hỗ trợ tách văn bản kèm định dạng <b>, <i>, <u>, [IMG:...] và ngắt dòng
-  function appendContentRuns(targetRuns, text) {
+  function appendContentRuns(targetRuns, text, forceBold = false, forceColor = COLOR_BLACK) {
     if (!text) return;
     const tokenRegex = /(<br\s*\/?>|\n|\[IMG:[^\]]+\]|<\/?(?:b|i|u)>)/gi;
     const parts = text.split(tokenRegex);
@@ -1330,7 +1360,8 @@ async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
           text: part,
           font: FONT_FAMILY, // Times New Roman
           size: 24,          // 12pt
-          bold: isBold,
+          bold: forceBold || isBold,
+          color: forceColor,
           italics: isItalic,
           underline: isUnderline ? { type: UnderlineType.SINGLE } : undefined
         }));
@@ -1359,7 +1390,7 @@ async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
         })
       ];
 
-      appendContentRuns(questionRuns, q.text);
+      appendContentRuns(questionRuns, q.text, false, COLOR_BLACK);
 
       // Khoảng cách: Trước câu đầu tiên của nhóm mới (từ nhóm 2 trở đi) có khoảng trống lớn hơn rõ rệt (260 twips)
       // Giữa các câu hỏi thông thường có khoảng trống 160 twips trước câu
@@ -1370,19 +1401,47 @@ async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
         children: questionRuns
       }));
 
-      // Đoạn đáp án (Câu trả lời ngắn không hiển thị đáp án trong đề thi theo mục 5.2)
-      if (q.type !== 'short_answer') {
+      // Đoạn đáp án
+      if (q.type === 'short_answer') {
+        // Trong đề thi học sinh: câu trả lời ngắn không hiển thị đáp án (mục 5.2)
+        // Trong file đáp án: hiển thị đáp án đúng (in đậm và có màu blue)
+        if (isAnswerKey) {
+          const correctAns = q.answers.find(a => a.correct) || q.answers[0];
+          if (correctAns) {
+            const answerRuns = [
+              new TextRun({
+                text: 'Đáp án: ',
+                bold: true,
+                color: COLOR_BLUE,
+                font: FONT_FAMILY,
+                size: 24
+              })
+            ];
+            appendContentRuns(answerRuns, correctAns.text, true, COLOR_BLUE);
+
+            contentParagraphs.push(new Paragraph({
+              indent: { left: 400 },
+              spacing: { before: 30, after: 30 },
+              children: answerRuns
+            }));
+          }
+        }
+      } else {
         for (const ans of q.answers) {
+          const isCorrectChoice = isAnswerKey && !!ans.correct;
+          const choiceColor = isCorrectChoice ? COLOR_BLUE : COLOR_BLACK;
+
           const answerRuns = [
             new TextRun({
               text: `${ans.labelDisplay} `,
               bold: true, // IN ĐẬM "A.", "B.", "A)", "B)"
+              color: choiceColor,
               font: FONT_FAMILY,
               size: 24 // 12pt
             })
           ];
 
-          appendContentRuns(answerRuns, ans.text);
+          appendContentRuns(answerRuns, ans.text, isCorrectChoice, choiceColor);
 
           contentParagraphs.push(new Paragraph({
             indent: { left: 400 }, // Thụt đầu dòng cho các phương án đáp án
@@ -1400,8 +1459,11 @@ async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
     spacing: { before: 240, after: 100 },
     children: [
       new TextRun({
-        text: '----------------------- HẾT -----------------------',
+        text: isAnswerKey
+          ? `----------------------- HẾT (ĐÁP ÁN MÃ ĐỀ ${examCode}) -----------------------`
+          : '----------------------- HẾT -----------------------',
         bold: true,
+        color: isAnswerKey ? COLOR_BLUE : COLOR_BLACK,
         font: FONT_FAMILY,
         size: 24 // 12pt
       })
@@ -1443,6 +1505,7 @@ async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
 
   return await Packer.toBlob(doc);
 }
+
 
 // --- FILE: js/answer-key.js ---
 /**
@@ -1771,12 +1834,17 @@ async function createAnswerKeyDocxBlob(allShuffledExams, headerInfo = {}) {
   return await Packer.toBlob(doc);
 }
 
+
 // --- FILE: js/ui.js ---
 /**
  * Module Giao Diện Người Dùng (UI Controller)
  * Quản lý tương tác nạp file Word (.docx), cấu hình đầu đề, tùy chọn trộn,
  * hiển thị xem trước trực quan và xử lý xuất file DOCX / ZIP.
  */
+
+
+
+
 
 
 // Trạng thái ứng dụng
@@ -2194,24 +2262,37 @@ async function executeMixAndExport() {
 
     state.generatedFiles = [];
 
-    // 3. Tạo từng file Word cho mỗi mã đề
+    // 3. Tạo từng file Word cho mỗi mã đề (Đề thi & Đáp án chi tiết)
     for (const exam of shuffledExams) {
-      const docxBlob = await createExamDocxBlob(exam, headerInfo);
-      const fileName = `De_${exam.examCode}.docx`;
-      zip.file(fileName, docxBlob);
-      const url = URL.createObjectURL(docxBlob);
+      // 3.1 File Đề thi (học sinh làm, không hiển thị đáp án)
+      const docxBlob = await createExamDocxBlob(exam, headerInfo, { isAnswerKey: false });
+      const examFileName = `Đề_${exam.examCode}.docx`;
+      zip.file(examFileName, docxBlob);
+      const examUrl = URL.createObjectURL(docxBlob);
       state.generatedFiles.push({
-        name: fileName,
+        name: examFileName,
         blob: docxBlob,
-        url,
+        url: examUrl,
         isAnswerKey: false
+      });
+
+      // 3.2 File Đáp án chi tiết tương ứng (các câu đúng in đậm và có màu blue)
+      const answerDocxBlob = await createExamDocxBlob(exam, headerInfo, { isAnswerKey: true });
+      const answerFileName = `Đáp_Án_${exam.examCode}.docx`;
+      zip.file(answerFileName, answerDocxBlob);
+      const answerUrl = URL.createObjectURL(answerDocxBlob);
+      state.generatedFiles.push({
+        name: answerFileName,
+        blob: answerDocxBlob,
+        url: answerUrl,
+        isAnswerKey: true
       });
     }
 
-    // 4. Tạo file Word Bảng Đáp Án Ma Trận
+    // 4. Tạo file Word Bảng Đáp Án Ma Trận (tổng hợp tất cả các mã đề)
     const answerBlob = await createAnswerKeyDocxBlob(shuffledExams, headerInfo);
     const safeMon = (headerInfo.mon || 'Mon_Hoc').trim().replace(/[\s/\\:*?"<>|]+/g, '_') || 'Mon_Hoc';
-    const answerFileName = `Bang_Dap_An_${safeMon}.docx`;
+    const answerFileName = `Bảng_Đáp_Án_${safeMon}.docx`;
     zip.file(answerFileName, answerBlob);
     const answerUrl = URL.createObjectURL(answerBlob);
     state.generatedFiles.push({
@@ -2320,6 +2401,7 @@ function downloadAllZip() {
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
+
 
 // --- FILE: js/app.js ---
 /**
@@ -2834,5 +2916,6 @@ function initEventListeners() {
     });
   }
 }
+
 
 })();

@@ -22,12 +22,13 @@ function getDocx() {
 }
 
 /**
- * Tạo Blob file Word (.docx) cho một mã đề thi cụ thể
+ * Tạo Blob file Word (.docx) cho một mã đề thi cụ thể (hoặc file đáp án chi tiết tương ứng)
  * @param {Object} shuffledExam Đề thi đã hoán vị (từ shuffler)
  * @param {Object} headerInfo Thông tin đầu đề (7 ô nhập)
+ * @param {Object} options Tùy chọn xuất đề: { isAnswerKey: boolean }
  * @returns {Promise<Blob>}
  */
-export async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
+export async function createExamDocxBlob(shuffledExam, headerInfo = {}, options = {}) {
   const docx = getDocx();
   if (!docx) {
     throw new Error('Thư viện docx chưa được nạp!');
@@ -58,10 +59,12 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
     thoiGian = '45 phút'
   } = headerInfo;
 
+  const isAnswerKey = !!options.isAnswerKey;
   const examCode = shuffledExam.examCode;
   const FONT_FAMILY = 'Times New Roman';
   const COLOR_RED = 'FF0000';
   const COLOR_BLACK = '000000';
+  const COLOR_BLUE = '0000FF';
 
   // 1. Bảng đầu đề thi (1 hàng, 2 cột không viền)
   const headerTable = new Table({
@@ -265,7 +268,31 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
         size: 10
       }
     },
-    children: [
+    children: isAnswerKey ? [
+      new TextRun({
+        text: 'Họ và tên: ................................................................  ',
+        font: FONT_FAMILY,
+        size: 24
+      }),
+      new TextRun({
+        text: 'Số báo danh: .......................  ',
+        font: FONT_FAMILY,
+        size: 24
+      }),
+      new TextRun({
+        text: 'Mã đề ',
+        bold: true,
+        font: FONT_FAMILY,
+        size: 24
+      }),
+      new TextRun({
+        text: `${String(examCode)} (ĐÁP ÁN)`,
+        bold: true,
+        color: COLOR_BLUE,
+        font: FONT_FAMILY,
+        size: 24
+      })
+    ] : [
       new TextRun({
         text: 'Họ và tên: ................................................................  ',
         font: FONT_FAMILY,
@@ -297,7 +324,7 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
   const imageMap = shuffledExam.imageMap || headerInfo.imageMap || {};
 
   // Hàm hỗ trợ tách văn bản kèm định dạng <b>, <i>, <u>, [IMG:...] và ngắt dòng
-  function appendContentRuns(targetRuns, text) {
+  function appendContentRuns(targetRuns, text, forceBold = false, forceColor = COLOR_BLACK) {
     if (!text) return;
     const tokenRegex = /(<br\s*\/?>|\n|\[IMG:[^\]]+\]|<\/?(?:b|i|u)>)/gi;
     const parts = text.split(tokenRegex);
@@ -356,7 +383,8 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
           text: part,
           font: FONT_FAMILY, // Times New Roman
           size: 24,          // 12pt
-          bold: isBold,
+          bold: forceBold || isBold,
+          color: forceColor,
           italics: isItalic,
           underline: isUnderline ? { type: UnderlineType.SINGLE } : undefined
         }));
@@ -385,7 +413,7 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
         })
       ];
 
-      appendContentRuns(questionRuns, q.text);
+      appendContentRuns(questionRuns, q.text, false, COLOR_BLACK);
 
       // Khoảng cách: Trước câu đầu tiên của nhóm mới (từ nhóm 2 trở đi) có khoảng trống lớn hơn rõ rệt (260 twips)
       // Giữa các câu hỏi thông thường có khoảng trống 160 twips trước câu
@@ -396,19 +424,47 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
         children: questionRuns
       }));
 
-      // Đoạn đáp án (Câu trả lời ngắn không hiển thị đáp án trong đề thi theo mục 5.2)
-      if (q.type !== 'short_answer') {
+      // Đoạn đáp án
+      if (q.type === 'short_answer') {
+        // Trong đề thi học sinh: câu trả lời ngắn không hiển thị đáp án (mục 5.2)
+        // Trong file đáp án: hiển thị đáp án đúng (in đậm và có màu blue)
+        if (isAnswerKey) {
+          const correctAns = q.answers.find(a => a.correct) || q.answers[0];
+          if (correctAns) {
+            const answerRuns = [
+              new TextRun({
+                text: 'Đáp án: ',
+                bold: true,
+                color: COLOR_BLUE,
+                font: FONT_FAMILY,
+                size: 24
+              })
+            ];
+            appendContentRuns(answerRuns, correctAns.text, true, COLOR_BLUE);
+
+            contentParagraphs.push(new Paragraph({
+              indent: { left: 400 },
+              spacing: { before: 30, after: 30 },
+              children: answerRuns
+            }));
+          }
+        }
+      } else {
         for (const ans of q.answers) {
+          const isCorrectChoice = isAnswerKey && !!ans.correct;
+          const choiceColor = isCorrectChoice ? COLOR_BLUE : COLOR_BLACK;
+
           const answerRuns = [
             new TextRun({
               text: `${ans.labelDisplay} `,
               bold: true, // IN ĐẬM "A.", "B.", "A)", "B)"
+              color: choiceColor,
               font: FONT_FAMILY,
               size: 24 // 12pt
             })
           ];
 
-          appendContentRuns(answerRuns, ans.text);
+          appendContentRuns(answerRuns, ans.text, isCorrectChoice, choiceColor);
 
           contentParagraphs.push(new Paragraph({
             indent: { left: 400 }, // Thụt đầu dòng cho các phương án đáp án
@@ -426,8 +482,11 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}) {
     spacing: { before: 240, after: 100 },
     children: [
       new TextRun({
-        text: '----------------------- HẾT -----------------------',
+        text: isAnswerKey
+          ? `----------------------- HẾT (ĐÁP ÁN MÃ ĐỀ ${examCode}) -----------------------`
+          : '----------------------- HẾT -----------------------',
         bold: true,
+        color: isAnswerKey ? COLOR_BLUE : COLOR_BLACK,
         font: FONT_FAMILY,
         size: 24 // 12pt
       })
