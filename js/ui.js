@@ -7,6 +7,7 @@ import { parseExam } from './parser.js';
 import { shuffleExamBatch } from './shuffler.js';
 import { createExamDocxBlob } from './docx-builder.js';
 import { createAnswerKeyDocxBlob, generateAnswerMatrix } from './answer-key.js';
+import { readExamFile } from './docx-importer.js';
 
 // Mẫu đề thi chuẩn theo mục 3.4 của tài liệu
 export const SAMPLE_EXAM = `__G__
@@ -109,20 +110,75 @@ export function initUI() {
     showSnackbar('Đã nạp đề mẫu trắc nghiệm thành công!');
   });
 
-  // 4. Nạp file .txt
+  // 4. Nạp file Word (.docx) hoặc file văn bản (.txt)
   const fileUploadInput = document.getElementById('fileUploadInput');
-  fileUploadInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
+  async function handleLoadFile(file) {
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      rawEditor.value = evt.target.result;
+    try {
+      showSnackbar(`Đang xử lý và đọc tệp '${file.name}'...`, 2000);
+      const res = await readExamFile(file);
+      rawEditor.value = res.text;
       updateLineNumbers();
       triggerLiveParse();
-      showSnackbar(`Đã nạp nội dung từ '${file.name}'`);
-    };
-    reader.readAsText(file, 'UTF-8');
+
+      // Tự động điền các ô thông tin đầu đề nếu trích xuất được từ file Word
+      if (res.extractedHeader) {
+        if (res.extractedHeader.soGD) document.getElementById('inpSoGD').value = res.extractedHeader.soGD;
+        if (res.extractedHeader.truong) document.getElementById('inpTruong').value = res.extractedHeader.truong;
+        if (res.extractedHeader.mon) document.getElementById('inpMon').value = res.extractedHeader.mon;
+        if (res.extractedHeader.thoiGian) document.getElementById('inpThoiGian').value = res.extractedHeader.thoiGian;
+        if (res.extractedHeader.namHoc) document.getElementById('inpNamHoc').value = res.extractedHeader.namHoc;
+        if (res.extractedHeader.kiKiemTra) document.getElementById('inpKiKiemTra').value = res.extractedHeader.kiKiemTra;
+      }
+
+      if (res.isConverted) {
+        showSnackbar(`Đã nạp file Word '${file.name}' và tự động chuyển đổi sang hệ marker!`);
+      } else {
+        showSnackbar(`Đã nạp thành công nội dung từ '${file.name}'!`);
+      }
+    } catch (err) {
+      console.error('Lỗi khi đọc file:', err);
+      alert(`Không thể đọc file: ${err.message}`);
+    }
+  }
+
+  fileUploadInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      handleLoadFile(file);
+      fileUploadInput.value = ''; // Reset input để cho phép chọn lại cùng file
+    }
   });
+
+  // Hỗ trợ Kéo & Thả file trực tiếp vào ô soạn thảo
+  const editorWrapper = document.querySelector('.editor-wrapper');
+  if (editorWrapper) {
+    ['dragenter', 'dragover'].forEach(eventName => {
+      editorWrapper.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        editorWrapper.style.outline = '2px dashed var(--primary)';
+        editorWrapper.style.backgroundColor = 'var(--primary-light)';
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      editorWrapper.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        editorWrapper.style.outline = '';
+        editorWrapper.style.backgroundColor = '';
+      });
+    });
+
+    editorWrapper.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      if (files && files.length > 0) {
+        handleLoadFile(files[0]);
+      }
+    });
+  }
 
   // 5. Xóa toàn bộ
   const btnClearEditor = document.getElementById('btnClearEditor');

@@ -8,34 +8,38 @@
  * - Hỗ trợ force update và skipWaiting an toàn
  */
 
-const CACHE_NAME = 'pwa-mark-n-mix-v1';
+const CACHE_NAME = 'pwa-mark-n-mix-v2';
 
 const PRECACHE_ASSETS = [
   './',
   './index.html',
-  './index.html?v=1',
+  './index.html?v=2',
   './css/style.css',
-  './css/style.css?v=1',
+  './css/style.css?v=2',
   './js/app.js',
-  './js/app.js?v=1',
+  './js/app.js?v=2',
   './js/ui.js',
-  './js/ui.js?v=1',
+  './js/ui.js?v=2',
   './js/parser.js',
-  './js/parser.js?v=1',
+  './js/parser.js?v=2',
   './js/shuffler.js',
-  './js/shuffler.js?v=1',
+  './js/shuffler.js?v=2',
   './js/docx-builder.js',
-  './js/docx-builder.js?v=1',
+  './js/docx-builder.js?v=2',
   './js/answer-key.js',
-  './js/answer-key.js?v=1',
+  './js/answer-key.js?v=2',
+  './js/docx-importer.js',
+  './js/docx-importer.js?v=2',
   './libs/docx.umd.js',
-  './libs/docx.umd.js?v=1',
+  './libs/docx.umd.js?v=2',
   './libs/jszip.min.js',
-  './libs/jszip.min.js?v=1',
+  './libs/jszip.min.js?v=2',
   './manifest.webmanifest',
-  './manifest.webmanifest?v=1',
+  './manifest.webmanifest?v=2',
   './icons/icon-192.png',
-  './icons/icon-512.png'
+  './icons/icon-192.png?v=2',
+  './icons/icon-512.png',
+  './icons/icon-512.png?v=2'
 ];
 
 // Cài đặt Service Worker và nạp toàn bộ precache assets
