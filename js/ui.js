@@ -119,7 +119,7 @@ export function initUI() {
       const res = await readExamFile(file);
       rawEditor.value = res.text;
       updateLineNumbers();
-      triggerLiveParse();
+      runParsingAndRender(); // Cập nhật bản xem trước ngay lập tức
 
       // Tự động điền các ô thông tin đầu đề nếu trích xuất được từ file Word
       if (res.extractedHeader) {
@@ -129,6 +129,11 @@ export function initUI() {
         if (res.extractedHeader.thoiGian) document.getElementById('inpThoiGian').value = res.extractedHeader.thoiGian;
         if (res.extractedHeader.namHoc) document.getElementById('inpNamHoc').value = res.extractedHeader.namHoc;
         if (res.extractedHeader.kiKiemTra) document.getElementById('inpKiKiemTra').value = res.extractedHeader.kiKiemTra;
+      }
+
+      // Tự động chuyển sang tab Xem trước nếu trên màn hình di động để người dùng thấy ngay
+      if (window.innerWidth <= 992) {
+        document.getElementById('tabBtnPreview').click();
       }
 
       if (res.isConverted) {
