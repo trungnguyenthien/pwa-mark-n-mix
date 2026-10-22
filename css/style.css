@@ -630,6 +630,10 @@ body {
   gap: 6px;
 }
 
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
 .form-label-row {
   display: flex;
   align-items: center;
