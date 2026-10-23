@@ -109,6 +109,66 @@ function renderExamCodesChips() {
 }
 
 /**
+ * Tạo HTML xem trước khung tiêu đề bài thi (Header)
+ */
+export function renderExamHeaderPreview() {
+  const header = getHeaderConfig();
+  const inpSo = typeof document !== "undefined" ? document.getElementById("inpSoGD") : null;
+  const inpTr = typeof document !== "undefined" ? document.getElementById("inpTruong") : null;
+  const inpKi = typeof document !== "undefined" ? document.getElementById("inpKiKiemTra") : null;
+  const inpNam = typeof document !== "undefined" ? document.getElementById("inpNamHoc") : null;
+  const inpMon = typeof document !== "undefined" ? document.getElementById("inpMon") : null;
+  const inpThoi = typeof document !== "undefined" ? document.getElementById("inpThoiGian") : null;
+  const inpStartCode = typeof document !== "undefined" ? document.getElementById("inpStartCode") : null;
+
+  const soGD = (header.soGD || (inpSo ? inpSo.placeholder : "") || "SỞ GIÁO DỤC VÀ ĐÀO TẠO").trim().toUpperCase();
+  const truong = (header.truong || (inpTr ? inpTr.placeholder : "") || "TRƯỜNG THPT NGUYỄN HỮU HUÂN").trim().toUpperCase();
+  const kiKiemTra = (header.kiKiemTra || (inpKi ? inpKi.placeholder : "") || "KIỂM TRA HỌC KỲ").trim().toUpperCase();
+  const namHoc = (header.namHoc || (inpNam ? inpNam.placeholder : "") || "2026 - 2027").trim();
+  const mon = (header.mon || (inpMon ? inpMon.placeholder : "") || "VẬT LÝ").trim().toUpperCase();
+  const thoiGian = (header.thoiGian || (inpThoi ? inpThoi.placeholder : "") || "45 phút").trim();
+  const previewExamCode = (inpStartCode && inpStartCode.value.trim()) || "101";
+
+  return `
+    <div class="exam-header-preview-card" title="Khung tiêu đề bài thi - Tự động đồng bộ với Thông Tin Đầu Đề Thi ở Bước 2">
+      <div class="exam-header-preview-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+        </svg>
+        <span>Xem Trước Tiêu Đề Bài Thi (Header)</span>
+      </div>
+      <div class="exam-header-preview-content">
+        <div class="exam-header-col col-left">
+          <div class="exam-header-dept">${escapeHtml(soGD)}</div>
+          <div class="exam-header-school">${escapeHtml(truong)}</div>
+          <div class="exam-header-dash">--------------------</div>
+          <div class="exam-header-pages"><em>(Đề thi có ... trang)</em></div>
+        </div>
+        <div class="exam-header-col col-right">
+          <div class="exam-header-session">${escapeHtml(kiKiemTra)}</div>
+          <div class="exam-header-year"><strong>NĂM HỌC ${escapeHtml(namHoc)}</strong></div>
+          <div class="exam-header-subject"><strong>MÔN: ${escapeHtml(mon)}</strong></div>
+          <div class="exam-header-time"><em>Thời gian làm bài: <strong>${escapeHtml(thoiGian)}</strong></em></div>
+          <div class="exam-header-timenote"><em>(không kể thời gian phát đề)</em></div>
+        </div>
+      </div>
+      <div class="exam-header-candidate-line">
+        <div class="candidate-meta">
+          <span>Họ và tên: ................................................................</span>
+          <span>Số báo danh: .......................</span>
+        </div>
+        <div class="candidate-code">
+          <strong>Mã đề ${escapeHtml(previewExamCode)}</strong>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/**
  * Hiển thị xem trước cấu trúc đề thi
  */
 export function renderExamPreview(parsedExam) {
@@ -125,7 +185,7 @@ export function renderExamPreview(parsedExam) {
     return;
   }
 
-  let html = '';
+  let html = renderExamHeaderPreview();
   let questionCounter = 0;
   const imageMap = parsedExam.imageMap || state.imageMap || {};
 
@@ -181,10 +241,9 @@ export function renderExamPreview(parsedExam) {
     html += `
       <div class="preview-group-box">
         <div class="preview-group-header">
-          <div>
-            <span>Nhóm ${gIdx + 1}</span>
-            <span class="group-mode-pill">${group.rawMarker} - ${modeDesc}</span>
-            ${isFixedGroup ? '<span class="badge badge-success" style="margin-left: 6px;">Vị trí cố định (#)</span>' : ''}
+          <div style="display: inline-flex; align-items: center; gap: 8px;">
+            <span class="group-mode-pill">${group.rawMarker} ${modeDesc}</span>
+            ${isFixedGroup ? '<span class="badge badge-success">Vị trí cố định (#)</span>' : ''}
           </div>
           <div style="font-size: 0.8125rem; color: var(--text-muted); font-weight: 500;">
             ${group.questions.length} câu hỏi
@@ -211,7 +270,7 @@ export function renderExamPreview(parsedExam) {
       html += `
         <div class="question-card">
           <div class="question-title-line">
-            <span class="question-qnum"><strong>${qNumDisplay}</strong></span>
+            <span class="question-qnum">${qNumDisplay}</span>
             <span>${renderFormattedContent(q.text)}</span>
           </div>
           <div class="answers-grid">
@@ -240,9 +299,8 @@ export function renderExamPreview(parsedExam) {
 
           html += `
             <div class="answer-item">
-              <span class="ans-pill ${isD ? 'd' : 's'}">
-                ${isD ? '__D__' : '__S__'}
-                ${isFixed ? ' <span class="lock-icon" title="Cố định vị trí (#)">🔒#</span>' : ''}
+              <span class="ans-pill ${isD ? 'd' : 's'}" title="${isFixed ? (isD ? 'Đúng (Cố định vị trí #)' : 'Sai (Cố định vị trí #)') : (isD ? 'Đáp án Đúng' : 'Đáp án Sai')}">
+                ${isD ? (isFixed ? 'D#' : 'D_') : (isFixed ? 'S#' : 'S_')}
               </span>
               <span class="answer-text"><strong>${labelDisplay}</strong> ${renderFormattedContent(ans.text)}</span>
             </div>

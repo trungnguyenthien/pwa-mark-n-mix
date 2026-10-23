@@ -482,6 +482,27 @@ function initEventListeners() {
     inpStartQNum.addEventListener('change', updatePreviewOnStartNumChange);
   }
 
+  // Cập nhật lại giao diện xem trước ngay lập tức khi chỉnh sửa Thông Tin Đầu Đề Thi
+  const headerInputs = document.querySelectorAll(".header-cached-input");
+  headerInputs.forEach(inp => {
+    const updateHeaderPreview = () => {
+      if (state.parsedExam && state.parsedExam.valid) {
+        renderExamPreview(state.parsedExam);
+      }
+    };
+    inp.addEventListener("input", updateHeaderPreview);
+    inp.addEventListener("change", updateHeaderPreview);
+  });
+
+  const inpStartCode = document.getElementById("inpStartCode");
+  if (inpStartCode) {
+    inpStartCode.addEventListener("input", () => {
+      if (state.parsedExam && state.parsedExam.valid) {
+        renderExamPreview(state.parsedExam);
+      }
+    });
+  }
+
   // Nút Trộn & Xuất Đề Thi
   const btnMixAndExport = document.getElementById('btnMixAndExport');
   if (btnMixAndExport) {

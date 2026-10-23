@@ -1226,6 +1226,141 @@ input:checked + .slider::before {
   overflow-y: auto;
 }
 
+/* Exam Header Live Preview Card */
+.exam-header-preview-card {
+  margin-bottom: 24px;
+  background: var(--bg-surface-elevated);
+  border: 1.5px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  padding: 20px 24px 18px 24px;
+  box-shadow: var(--shadow-sm);
+  font-family: "Times New Roman", Times, Georgia, serif;
+  color: var(--text-primary);
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.exam-header-preview-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: var(--primary-subtle);
+  color: var(--primary);
+  border-radius: var(--radius-sm);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.exam-header-preview-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.exam-header-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  line-height: 1.35;
+}
+
+.exam-header-dept {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.exam-header-school {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.exam-header-dash {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  margin: 2px 0;
+}
+
+.exam-header-pages {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+}
+
+.exam-header-session {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.exam-header-year {
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.exam-header-subject {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.exam-header-time {
+  font-size: 0.9375rem;
+  margin-top: 2px;
+}
+
+.exam-header-timenote {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.exam-header-candidate-line {
+  margin-top: 16px;
+  padding: 12px 4px 2px 4px;
+  border-top: 1px dashed var(--border-medium);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1rem;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.candidate-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.candidate-code {
+  font-size: 1.0625rem;
+  padding: 2px 10px;
+  border: 1.5px solid var(--primary);
+  border-radius: var(--radius-sm);
+  background: var(--primary-subtle);
+  color: var(--primary);
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .exam-header-preview-content {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .exam-header-preview-card {
+    padding: 14px 16px;
+  }
+}
+
 /* Group & Question Preview Cards */
 .preview-group-box {
   margin-bottom: 24px;
@@ -1261,20 +1396,26 @@ input:checked + .slider::before {
 .preview-questions-list {
   display: flex;
   flex-direction: column;
-  padding: 14px 16px;
-  gap: 16px;
+  padding: 6px 20px;
+  gap: 0;
 }
 
 .question-card {
-  padding: 16px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
+  padding: 16px 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border-subtle);
+  border-radius: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  font-family: 'Times New Roman', Times, serif;
+  gap: 10px;
+  font-family: 'Times New Roman', Times, Georgia, serif;
   font-size: 1rem; /* 12pt */
+  transition: background 0.15s ease;
+}
+
+.question-card:last-child {
+  border-bottom: none;
 }
 
 .question-title-line {
@@ -1290,9 +1431,24 @@ input:checked + .slider::before {
 }
 
 .question-qnum {
-  color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1px 8px;
+  border-radius: var(--radius-sm);
+  background-color: #185abd !important;
+  color: #ffffff !important;
+  border: 1px solid #104a9e !important;
+  box-shadow: 0 1px 2px rgba(24, 90, 189, 0.25);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.8125rem;
   font-weight: 700;
-  margin-right: 6px;
+  height: 24px;
+  line-height: 22px;
+  margin-right: 8px;
+  vertical-align: middle;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 .answers-grid {
@@ -1980,6 +2136,22 @@ input:checked + .slider::before {
 }
 
 /* Khối xem trước đề thi (Trang văn bản Word) */
+[data-theme="light"] .exam-header-preview-card {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .exam-header-candidate-line {
+  border-top-color: #e2e8f0;
+}
+
+[data-theme="light"] .candidate-code {
+  border-color: #0284c7;
+  background: #f0f9ff;
+  color: #0284c7;
+}
+
 [data-theme="light"] .preview-group-box {
   background: #ffffff;
   border: 1px solid #d2d0ce;
@@ -1998,19 +2170,30 @@ input:checked + .slider::before {
 }
 
 [data-theme="light"] .question-card {
-  background: #ffffff;
-  border: 1px solid #edebe9;
-  border-left: 3px solid #185abd;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #e2e8f0;
+  border-left: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+[data-theme="light"] .question-card:last-child {
+  border-bottom: none;
 }
 
 [data-theme="light"] .question-card:hover {
-  border-color: #c8c6c4;
-  border-left-color: #104a9e;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border-color: inherit;
+  border-left: none;
+  box-shadow: none;
+  background: transparent;
 }
 
 [data-theme="light"] .question-qnum {
-  color: #185abd;
+  background-color: #185abd !important;
+  color: #ffffff !important;
+  border: 1px solid #104a9e !important;
+  box-shadow: 0 1px 2px rgba(24, 90, 189, 0.25);
 }
 
 [data-theme="light"] .ans-pill.d {
@@ -2386,12 +2569,12 @@ html, body {
   }
 
   .preview-questions-list {
-    padding: 10px 8px;
-    gap: 10px;
+    padding: 4px 12px;
+    gap: 0;
   }
 
   .question-card {
-    padding: 12px 10px;
+    padding: 14px 0;
   }
 
   .question-title-row {
@@ -2415,6 +2598,14 @@ html, body {
     height: 20px;
     line-height: 20px;
     padding: 1px 6px;
+  }
+
+  .question-qnum {
+    font-size: 0.72rem;
+    height: 20px;
+    line-height: 20px;
+    padding: 1px 6px;
+    margin-right: 6px;
   }
 
   /* Ảnh hiển thị co dãn an toàn trên điện thoại */
