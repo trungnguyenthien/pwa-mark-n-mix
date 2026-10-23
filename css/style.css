@@ -1228,12 +1228,12 @@ input:checked + .slider::before {
 
 /* Exam Header Live Preview Card */
 .exam-header-preview-card {
-  margin-bottom: 24px;
-  background: var(--bg-surface-elevated);
-  border: 1.5px solid var(--border-medium);
-  border-radius: var(--radius-md);
-  padding: 20px 24px 18px 24px;
-  box-shadow: var(--shadow-sm);
+  margin-bottom: 20px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 10px 0 16px 0;
+  box-shadow: none;
   font-family: "Times New Roman", Times, Georgia, serif;
   color: var(--text-primary);
   position: relative;
@@ -1342,12 +1342,11 @@ input:checked + .slider::before {
 }
 
 .candidate-code {
-  font-size: 1.0625rem;
-  padding: 2px 10px;
-  border: 1.5px solid var(--primary);
-  border-radius: var(--radius-sm);
-  background: var(--primary-subtle);
-  color: var(--primary);
+  font-size: 1rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
   font-weight: 700;
 }
 
@@ -1357,7 +1356,7 @@ input:checked + .slider::before {
     gap: 14px;
   }
   .exam-header-preview-card {
-    padding: 14px 16px;
+    padding: 10px 0;
   }
 }
 
@@ -2137,9 +2136,9 @@ input:checked + .slider::before {
 
 /* Khối xem trước đề thi (Trang văn bản Word) */
 [data-theme="light"] .exam-header-preview-card {
-  background: #ffffff;
-  border-color: #cbd5e1;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 [data-theme="light"] .exam-header-candidate-line {
@@ -2147,9 +2146,9 @@ input:checked + .slider::before {
 }
 
 [data-theme="light"] .candidate-code {
-  border-color: #0284c7;
-  background: #f0f9ff;
-  color: #0284c7;
+  border: none;
+  background: transparent;
+  color: #000000;
 }
 
 [data-theme="light"] .preview-group-box {

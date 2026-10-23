@@ -130,16 +130,7 @@ export function renderExamHeaderPreview() {
   const previewExamCode = (inpStartCode && inpStartCode.value.trim()) || "101";
 
   return `
-    <div class="exam-header-preview-card" title="Khung tiêu đề bài thi - Tự động đồng bộ với Thông Tin Đầu Đề Thi ở Bước 2">
-      <div class="exam-header-preview-badge">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-          <polyline points="14 2 14 8 20 8"></polyline>
-          <line x1="16" y1="13" x2="8" y2="13"></line>
-          <line x1="16" y1="17" x2="8" y2="17"></line>
-        </svg>
-        <span>Xem Trước Tiêu Đề Bài Thi (Header)</span>
-      </div>
+    <div class="exam-header-preview-card" title="Tiêu đề bài thi - Tự động đồng bộ với Thông Tin Đầu Đề Thi ở Bước 2">
       <div class="exam-header-preview-content">
         <div class="exam-header-col col-left">
           <div class="exam-header-dept">${escapeHtml(soGD)}</div>
@@ -228,8 +219,8 @@ export function renderExamPreview(parsedExam) {
   const startNumInput = typeof document !== 'undefined' ? document.getElementById('inpStartQNum') : null;
   const startQNum = (startNumInput && parseInt(startNumInput.value, 10)) || 1;
 
-  const selScope = typeof document !== 'undefined' ? document.getElementById('selNumberingScope') : null;
-  const numberingScope = selScope ? selScope.value : 'all';
+  const chkPerGroup = typeof document !== 'undefined' ? document.getElementById('chkNumberingPerGroup') : null;
+  const numberingScope = (chkPerGroup && chkPerGroup.checked) ? 'group' : 'all';
 
   const chkInsertBlank = typeof document !== 'undefined' ? document.getElementById('chkInsertBlankLine') : null;
   const insertBlankLine = chkInsertBlank ? chkInsertBlank.checked : false;
@@ -506,8 +497,8 @@ export function getHeaderConfig() {
 export function getMixingOptions() {
   const radioNumbering = document.querySelector('input[name="radioNumbering"]:checked');
   const numberingFormat = radioNumbering ? radioNumbering.value : 'dot';
-  const selScope = document.getElementById('selNumberingScope');
-  const numberingScope = selScope ? selScope.value : 'all';
+  const chkPerGroup = document.getElementById('chkNumberingPerGroup');
+  const numberingScope = (chkPerGroup && chkPerGroup.checked) ? 'group' : 'all';
   const startQNum = parseInt(document.getElementById('inpStartQNum').value, 10) || 1;
   const defaultLabelStyle = document.getElementById('selDefaultLabelStyle').value || 'ABCD';
   const shuffleGroups = document.getElementById('chkShuffleGroups') ? document.getElementById('chkShuffleGroups').checked : false;

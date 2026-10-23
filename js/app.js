@@ -458,16 +458,14 @@ function initEventListeners() {
     });
   });
 
-  // Cập nhật lại giao diện xem trước ngay lập tức khi đổi Cách đánh số câu (chung hoặc riêng từng nhóm)
-  const selNumberingScope = document.getElementById('selNumberingScope');
-  if (selNumberingScope) {
-    const updatePreviewOnScopeChange = () => {
+  // Cập nhật lại giao diện xem trước khi đổi Đánh số câu riêng từng group
+  const chkNumberingPerGroup = document.getElementById('chkNumberingPerGroup');
+  if (chkNumberingPerGroup) {
+    chkNumberingPerGroup.addEventListener('change', () => {
       if (state.parsedExam && state.parsedExam.valid) {
         renderExamPreview(state.parsedExam);
       }
-    };
-    selNumberingScope.addEventListener('change', updatePreviewOnScopeChange);
-    selNumberingScope.addEventListener('input', updatePreviewOnScopeChange);
+    });
   }
 
   // Cập nhật lại giao diện xem trước ngay lập tức khi đổi Kiểu nhãn đáp án
