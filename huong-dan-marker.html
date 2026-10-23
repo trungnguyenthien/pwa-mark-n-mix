@@ -301,7 +301,7 @@
       flex-wrap: wrap;
     }
 
-    @media (max-width: 640px) {
+    @media (max-width: 768px) {
       .guide-container {
         padding: 16px 12px 60px;
       }
@@ -309,10 +309,103 @@
         padding: 20px 16px;
       }
       .guide-card {
-        padding: 20px 16px;
+        padding: 18px 14px;
+      }
+      .guide-card-title {
+        font-size: 1.15rem;
       }
       .guide-hero-title {
-        font-size: 1.4rem;
+        font-size: 1.35rem;
+      }
+
+      /* Tối ưu hóa bảng Marker sang dạng Thẻ Card trên thiết bị di động */
+      .guide-table-wrap {
+        border: none;
+        background: transparent;
+        overflow: visible;
+        margin: 14px 0;
+      }
+
+      .guide-table,
+      .guide-table thead,
+      .guide-table tbody,
+      .guide-table th,
+      .guide-table td,
+      .guide-table tr {
+        display: block;
+        width: 100% !important;
+        box-sizing: border-box;
+      }
+
+      .guide-table thead {
+        display: none;
+      }
+
+      .guide-table tbody {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .guide-table tr {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        background: #ffffff;
+        border: 1px solid var(--border-medium, #cbd5e1);
+        border-radius: 8px;
+        padding: 14px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      }
+
+      .guide-table tr.table-group-header {
+        background: var(--bg-hover, #f1f5f9);
+        border: 1px solid var(--border-medium, #cbd5e1);
+        border-radius: 6px;
+        padding: 10px 12px;
+        margin-top: 6px;
+        margin-bottom: 2px;
+        box-shadow: none;
+      }
+
+      .guide-table tr.table-group-header td {
+        font-weight: 700;
+        color: #1e293b;
+        font-size: 0.8125rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0;
+        border: none;
+      }
+
+      .guide-table tr:hover td {
+        background: transparent;
+      }
+
+      .guide-table td {
+        padding: 0;
+        border: none;
+      }
+
+      .guide-table td:nth-child(1) {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .guide-table td:nth-child(2) {
+        font-size: 0.9375rem;
+        font-weight: 700;
+        color: #1e293b;
+      }
+
+      .guide-table td:nth-child(3) {
+        padding-top: 8px;
+        border-top: 1px dashed #e2e8f0;
+        font-size: 0.875rem;
+        line-height: 1.6;
+        color: #475569;
       }
     }
   </style>
@@ -390,23 +483,23 @@
       </p>
 
       <div class="guide-quick-nav">
-        <a href="#sec-markers-co-ban" class="guide-nav-pill">1. Marker Câu hỏi & Đáp án</a>
+        <a href="#sec-markers-co-ban" class="guide-nav-pill">1. Bảng Tổng Hợp Marker (Câu hỏi, Đáp án &amp; Nhóm)</a>
         <a href="#sec-3-dang-cau-hoi" class="guide-nav-pill">2. 3 Dạng câu hỏi chuẩn</a>
-        <a href="#sec-marker-nhom" class="guide-nav-pill">3. Marker Nhóm câu hỏi</a>
+        <a href="#sec-marker-nhom" class="guide-nav-pill">3. Chi tiết Marker Nhóm &amp; Tự Động Thêm "PHẦN I"</a>
         <a href="#sec-co-dinh-vi-tri" class="guide-nav-pill">4. Cố định vị trí (#)</a>
         <a href="#sec-tinh-nang-linh-hoat" class="guide-nav-pill">5. Tính năng linh hoạt (By-pass)</a>
         <a href="#sec-de-mau-hoan-chinh" class="guide-nav-pill">6. Đề thi mẫu hoàn chỉnh</a>
       </div>
     </div>
 
-    <!-- MỤC 1: MARKER CƠ BẢN -->
+    <!-- MỤC 1: BẢNG TỔNG HỢP MARKER -->
     <section id="sec-markers-co-ban" class="guide-card">
       <h2 class="guide-card-title">
         <span class="step-num">1</span>
-        <span>Marker Câu Hỏi &amp; Đáp Án Cơ Bản</span>
+        <span>Bảng Tổng Hợp Marker Chuẩn (Câu Hỏi, Đáp Án &amp; Marker Nhóm)</span>
       </h2>
       <p style="color: #475569; font-size: 0.9375rem; line-height: 1.6; margin-top: 0;">
-        Trong file Word, bạn chỉ cần đặt các marker phía trước nội dung câu hỏi hoặc phương án đáp án:
+        Trong file Word, bạn đặt các marker phía trước nội dung câu hỏi, phương án đáp án hoặc ở đầu mỗi nhóm / phần thi:
       </p>
 
       <div class="guide-table-wrap">
@@ -419,6 +512,11 @@
             </tr>
           </thead>
           <tbody>
+            <tr class="table-group-header">
+              <td colspan="3" style="background: #f1f5f9; font-weight: 700; color: #1e293b; padding: 10px 14px; text-transform: uppercase; font-size: 0.8125rem; letter-spacing: 0.5px;">
+                📌 1. Marker Câu Hỏi &amp; Đáp Án
+              </td>
+            </tr>
             <tr>
               <td><span class="marker-badge-code marker-code-q">__QUESTION__</span></td>
               <td><strong>Bắt đầu câu hỏi</strong></td>
@@ -443,6 +541,37 @@
               <td><span class="marker-badge-code marker-code-s">__S#__</span> hoặc <span class="marker-badge-code marker-code-s">__#S__</span></td>
               <td><strong>Sai (Cố định #)</strong></td>
               <td>Đáp án sai nhưng <em>cố định vị trí</em> (ví dụ phương án D: "Tất cả các đáp án trên đều sai").</td>
+            </tr>
+
+            <tr class="table-group-header">
+              <td colspan="3" style="background: #f1f5f9; font-weight: 700; color: #1e293b; padding: 10px 14px; text-transform: uppercase; font-size: 0.8125rem; letter-spacing: 0.5px; border-top: 2px solid #cbd5e1;">
+                📁 2. Marker Nhóm / Phân Phần Đề Thi (Group Markers)
+              </td>
+            </tr>
+            <tr>
+              <td><span class="marker-badge-code marker-code-g">__G__</span></td>
+              <td><strong>Mix CẢ câu &amp; đáp án</strong></td>
+              <td>Bắt đầu nhóm/phần mới. <strong>Mặc định phổ biến nhất</strong>: đảo cả thứ tự câu hỏi và thứ tự phương án đáp án trong nhóm.</td>
+            </tr>
+            <tr>
+              <td><span class="marker-badge-code marker-code-g">__GQ__</span></td>
+              <td><strong>Chỉ mix CÂU HỎI</strong></td>
+              <td>Chỉ đảo thứ tự câu hỏi trong nhóm, <em>giữ nguyên</em> thứ tự phương án A, B, C, D (thường dùng cho câu hỏi Đúng/Sai).</td>
+            </tr>
+            <tr>
+              <td><span class="marker-badge-code marker-code-g">__GA__</span></td>
+              <td><strong>Chỉ mix ĐÁP ÁN</strong></td>
+              <td>Chỉ đảo thứ tự đáp án, <em>giữ nguyên</em> thứ tự câu hỏi (câu 1, 2, 3 giữ nguyên vị trí, thích hợp câu hỏi tự luận hoặc số thứ tự cố định).</td>
+            </tr>
+            <tr>
+              <td><span class="marker-badge-code marker-code-g">__G0__</span></td>
+              <td><strong>KHÔNG ĐẢO GÌ CẢ</strong></td>
+              <td>Giữ nguyên 100% thứ tự câu và đáp án. Cực kỳ quan trọng cho <strong>bài đọc hiểu tiếng Anh / Ngữ văn</strong>, bài nghe hoặc câu hỏi theo chuỗi logic.</td>
+            </tr>
+            <tr>
+              <td><span class="marker-badge-code marker-code-g">__G#__</span> hoặc <span class="marker-badge-code marker-code-g">__#G__</span></td>
+              <td><strong>Cố định vị trí nhóm (#)</strong></td>
+              <td>Cố định vị trí của nhóm này, không bị đảo thứ tự so với các nhóm khác (ví dụ: nhóm Tự luận hoặc Đọc hiểu luôn nằm ở cuối đề). Có thể kết hợp: <code>__GQ#__</code>, <code>__GA#__</code>, <code>__G0#__</code>.</td>
             </tr>
           </tbody>
         </table>
