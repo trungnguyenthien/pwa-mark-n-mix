@@ -458,6 +458,18 @@ function initEventListeners() {
     });
   });
 
+  // Cập nhật lại giao diện xem trước ngay lập tức khi đổi Cách đánh số câu (chung hoặc riêng từng nhóm)
+  const selNumberingScope = document.getElementById('selNumberingScope');
+  if (selNumberingScope) {
+    const updatePreviewOnScopeChange = () => {
+      if (state.parsedExam && state.parsedExam.valid) {
+        renderExamPreview(state.parsedExam);
+      }
+    };
+    selNumberingScope.addEventListener('change', updatePreviewOnScopeChange);
+    selNumberingScope.addEventListener('input', updatePreviewOnScopeChange);
+  }
+
   // Cập nhật lại giao diện xem trước ngay lập tức khi đổi Kiểu nhãn đáp án
   const selDefaultLabelStyle = document.getElementById('selDefaultLabelStyle');
   if (selDefaultLabelStyle) {
@@ -497,6 +509,16 @@ function initEventListeners() {
   const inpStartCode = document.getElementById("inpStartCode");
   if (inpStartCode) {
     inpStartCode.addEventListener("input", () => {
+      if (state.parsedExam && state.parsedExam.valid) {
+        renderExamPreview(state.parsedExam);
+      }
+    });
+  }
+
+  // Cập nhật lại giao diện xem trước khi đổi Chèn line trống giữa các câu
+  const chkInsertBlankLine = document.getElementById('chkInsertBlankLine');
+  if (chkInsertBlankLine) {
+    chkInsertBlankLine.addEventListener('change', () => {
       if (state.parsedExam && state.parsedExam.valid) {
         renderExamPreview(state.parsedExam);
       }

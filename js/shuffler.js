@@ -262,6 +262,7 @@ export function shuffleExamForCode(parsedExam, examCode, options = {}) {
     shuffleGroups = false,
     defaultLabelStyle = 'ABCD',
     numberingFormat = 'dot', // 'dot' (Câu 1.) hoặc 'colon' (Câu 1:)
+    numberingScope = 'all',
     startQuestionNumber = 1,
     baseSeed = 1337
   } = options;
@@ -283,7 +284,8 @@ export function shuffleExamForCode(parsedExam, examCode, options = {}) {
   const shuffledGroups = [];
   const flatQuestions = [];
 
-  for (const group of groupsToProcess) {
+  for (let gIdx = 0; gIdx < groupsToProcess.length; gIdx++) {
+    const group = groupsToProcess[gIdx];
     const mode = group.mode || 'G';
     const labelStyle = group.labelStyle || defaultLabelStyle;
 
@@ -306,9 +308,15 @@ export function shuffleExamForCode(parsedExam, examCode, options = {}) {
 
     // Hoán vị đáp án bên trong từng câu
     const finalGroupQuestions = [];
+    let groupQuestionIndex = 0;
     for (const q of groupQuestions) {
       globalQuestionIndex++;
-      const currentQNumber = startQuestionNumber + globalQuestionIndex - 1;
+      groupQuestionIndex++;
+
+      const currentQNumber = (numberingScope === 'group')
+        ? (startQuestionNumber + groupQuestionIndex - 1)
+        : (startQuestionNumber + globalQuestionIndex - 1);
+
       const qPrefix = numberingFormat === 'colon'
         ? `Câu ${currentQNumber}:`
         : (numberingFormat === 'paren' ? `Câu ${currentQNumber})` : `Câu ${currentQNumber}.`);
@@ -334,6 +342,8 @@ export function shuffleExamForCode(parsedExam, examCode, options = {}) {
       const processedQuestion = {
         ...q,
         displayNumber: currentQNumber,
+        globalIndex: globalQuestionIndex,
+        groupNumber: gIdx + 1,
         displayPrefix: qPrefix,
         labelStyle,
         answers: answersWithLabels

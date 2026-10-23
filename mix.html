@@ -421,6 +421,18 @@
               </div>
             </div>
 
+            <!-- Cách đánh số câu -->
+            <div class="option-row">
+              <label for="selNumberingScope" class="option-label">
+                <span class="label-main">Cách đánh số câu:</span>
+                <span class="label-hint">Đánh số chung toàn đề hoặc riêng từng phần</span>
+              </label>
+              <select id="selNumberingScope" class="form-select" style="max-width: 270px;">
+                <option value="all" selected>Đánh số câu chung cho tất cả</option>
+                <option value="group">Đánh số câu riêng cho từng phần/group</option>
+              </select>
+            </div>
+
             <!-- Số thứ tự câu bắt đầu -->
             <div class="option-row">
               <label for="inpStartQNum" class="option-label">
@@ -452,6 +464,18 @@
               </span>
               <label class="switch">
                 <input type="checkbox" id="chkShuffleGroups">
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <!-- Chèn line trống giữa các câu -->
+            <div class="option-row toggle-row">
+              <span class="option-label">
+                <span class="label-main">Chèn line trống giữa các câu:</span>
+                <span class="label-hint">Thêm 1 dòng trống cách biệt giữa các câu khi xuất đề Word</span>
+              </span>
+              <label class="switch">
+                <input type="checkbox" id="chkInsertBlankLine">
                 <span class="slider"></span>
               </label>
             </div>

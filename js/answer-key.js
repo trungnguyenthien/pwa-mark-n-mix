@@ -68,7 +68,7 @@ export function extractQuestionAnswerKey(q) {
  * @param {Array<Object>} allShuffledExams Danh sách tất cả các mã đề thi đã hoán vị
  * @returns {Object} { headers: Array<string>, rows: Array<Object> }
  */
-export function buildAnswerMatrix(allShuffledExams) {
+export function buildAnswerMatrix(allShuffledExams, options = {}) {
   if (!allShuffledExams || allShuffledExams.length === 0) {
     return { headers: [], rows: [] };
   }
@@ -76,11 +76,20 @@ export function buildAnswerMatrix(allShuffledExams) {
   const examCodes = allShuffledExams.map(e => e.examCode);
   const totalQuestions = allShuffledExams[0].flatQuestions.length;
   const rows = [];
+  const hasMultipleGroups = (allShuffledExams[0].groups && allShuffledExams[0].groups.length > 1);
+  const isGroupScope = (options.numberingScope === 'group');
 
   for (let i = 0; i < totalQuestions; i++) {
-    const qNum = allShuffledExams[0].flatQuestions[i].displayNumber || (i + 1);
+    const qSample = allShuffledExams[0].flatQuestions[i];
+    const qNum = qSample.displayNumber || (i + 1);
+    const questionLabel = (isGroupScope && hasMultipleGroups && qSample.groupNumber)
+      ? `P${qSample.groupNumber} - Câu ${qNum}`
+      : `Câu ${qNum}`;
+
     const row = {
       questionNumber: qNum,
+      questionLabel,
+      groupNumber: qSample.groupNumber,
       answers: {}
     };
 
@@ -104,7 +113,7 @@ export function buildAnswerMatrix(allShuffledExams) {
  * @param {Object} headerInfo
  * @returns {Promise<Blob>}
  */
-export async function createAnswerKeyDocxBlob(allShuffledExams, headerInfo = {}) {
+export async function createAnswerKeyDocxBlob(allShuffledExams, headerInfo = {}, options = {}) {
   const docx = getDocx();
   if (!docx) {
     throw new Error('Thư viện docx chưa được nạp!');
@@ -133,7 +142,7 @@ export async function createAnswerKeyDocxBlob(allShuffledExams, headerInfo = {})
   } = headerInfo;
 
   const FONT_FAMILY = 'Times New Roman';
-  const matrix = buildAnswerMatrix(allShuffledExams);
+  const matrix = buildAnswerMatrix(allShuffledExams, options);
 
   // Tiêu đề trang đáp án
   const titleParagraphs = [
@@ -262,7 +271,7 @@ export async function createAnswerKeyDocxBlob(allShuffledExams, headerInfo = {})
             alignment: AlignmentType.CENTER,
             children: [
               new TextRun({
-                text: `Câu ${row.questionNumber}`,
+                text: row.questionLabel || `Câu ${row.questionNumber}`,
                 bold: true,
                 font: FONT_FAMILY,
                 size: 22

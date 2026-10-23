@@ -186,7 +186,7 @@ export function renderExamPreview(parsedExam) {
   }
 
   let html = renderExamHeaderPreview();
-  let questionCounter = 0;
+  let globalQuestionCounter = 0;
   const imageMap = parsedExam.imageMap || state.imageMap || {};
 
   function renderFormattedContent(text) {
@@ -228,6 +228,12 @@ export function renderExamPreview(parsedExam) {
   const startNumInput = typeof document !== 'undefined' ? document.getElementById('inpStartQNum') : null;
   const startQNum = (startNumInput && parseInt(startNumInput.value, 10)) || 1;
 
+  const selScope = typeof document !== 'undefined' ? document.getElementById('selNumberingScope') : null;
+  const numberingScope = selScope ? selScope.value : 'all';
+
+  const chkInsertBlank = typeof document !== 'undefined' ? document.getElementById('chkInsertBlankLine') : null;
+  const insertBlankLine = chkInsertBlank ? chkInsertBlank.checked : false;
+
   parsedExam.groups.forEach((group, gIdx) => {
     const modeBadge = group.mode || 'G';
     const isFixedGroup = group.fixed;
@@ -257,9 +263,13 @@ export function renderExamPreview(parsedExam) {
         <div class="preview-questions-list">
     `;
 
-    group.questions.forEach((q) => {
-      questionCounter++;
-      const currentQNumber = startQNum + questionCounter - 1;
+    let groupQuestionCounter = 0;
+    group.questions.forEach((q, qIdxInGroup) => {
+      globalQuestionCounter++;
+      groupQuestionCounter++;
+      const currentQNumber = (numberingScope === 'group')
+        ? (startQNum + groupQuestionCounter - 1)
+        : (startQNum + globalQuestionCounter - 1);
       let qNumDisplay = `Câu ${currentQNumber}.`;
       if (currentNumberingFormat === 'colon') {
         qNumDisplay = `Câu ${currentQNumber}:`;
@@ -312,6 +322,10 @@ export function renderExamPreview(parsedExam) {
           </div>
         </div>
       `;
+      const isLastQuestionOverall = (gIdx === parsedExam.groups.length - 1 && qIdxInGroup === group.questions.length - 1);
+      if (insertBlankLine && !isLastQuestionOverall) {
+        html += '<div class="preview-blank-line" style="height: 16px;" title="Dòng trống giữa các câu"></div>';
+      }
     });
 
     html += `
@@ -492,15 +506,20 @@ export function getHeaderConfig() {
 export function getMixingOptions() {
   const radioNumbering = document.querySelector('input[name="radioNumbering"]:checked');
   const numberingFormat = radioNumbering ? radioNumbering.value : 'dot';
+  const selScope = document.getElementById('selNumberingScope');
+  const numberingScope = selScope ? selScope.value : 'all';
   const startQNum = parseInt(document.getElementById('inpStartQNum').value, 10) || 1;
   const defaultLabelStyle = document.getElementById('selDefaultLabelStyle').value || 'ABCD';
-  const shuffleGroups = document.getElementById('chkShuffleGroups').checked;
+  const shuffleGroups = document.getElementById('chkShuffleGroups') ? document.getElementById('chkShuffleGroups').checked : false;
+  const insertBlankLine = document.getElementById('chkInsertBlankLine') ? document.getElementById('chkInsertBlankLine').checked : false;
 
   return {
     numberingFormat,
+    numberingScope,
     startQuestionNumber: startQNum,
     defaultLabelStyle,
-    shuffleGroups
+    shuffleGroups,
+    insertBlankLine
   };
 }
 
@@ -561,7 +580,7 @@ export async function executeMixAndExport() {
     // 3. Tạo từng file Word cho mỗi mã đề (Đề thi & Đáp án chi tiết)
     for (const exam of shuffledExams) {
       // 3.1 File Đề thi (học sinh làm, không hiển thị đáp án)
-      const docxBlob = await createExamDocxBlob(exam, headerInfo, { isAnswerKey: false });
+      const docxBlob = await createExamDocxBlob(exam, headerInfo, { isAnswerKey: false, insertBlankLine: mixingOptions.insertBlankLine });
       const examFileName = `Đề_${exam.examCode}.docx`;
       zip.file(examFileName, docxBlob);
       const examUrl = URL.createObjectURL(docxBlob);
@@ -573,7 +592,7 @@ export async function executeMixAndExport() {
       });
 
       // 3.2 File Đáp án chi tiết tương ứng (các câu đúng in đậm và có màu blue)
-      const answerDocxBlob = await createExamDocxBlob(exam, headerInfo, { isAnswerKey: true });
+      const answerDocxBlob = await createExamDocxBlob(exam, headerInfo, { isAnswerKey: true, insertBlankLine: mixingOptions.insertBlankLine });
       const answerFileName = `Đáp_Án_${exam.examCode}.docx`;
       zip.file(answerFileName, answerDocxBlob);
       const answerUrl = URL.createObjectURL(answerDocxBlob);
@@ -586,7 +605,7 @@ export async function executeMixAndExport() {
     }
 
     // 4. Tạo file Word Bảng Đáp Án Ma Trận (tổng hợp tất cả các mã đề)
-    const answerBlob = await createAnswerKeyDocxBlob(shuffledExams, headerInfo);
+    const answerBlob = await createAnswerKeyDocxBlob(shuffledExams, headerInfo, mixingOptions);
     const safeMon = (headerInfo.mon || 'Mon_Hoc').trim().replace(/[\s/\\:*?"<>|]+/g, '_') || 'Mon_Hoc';
     const answerFileName = `Bảng_Đáp_Án_${safeMon}.docx`;
     zip.file(answerFileName, answerBlob);

@@ -62,6 +62,7 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}, options 
   } = headerInfo;
 
   const isAnswerKey = !!options.isAnswerKey;
+  const insertBlankLine = !!options.insertBlankLine;
   const examCode = shuffledExam.examCode;
   const FONT_FAMILY = 'Times New Roman';
   const COLOR_RED = 'FF0000';
@@ -496,6 +497,23 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}, options 
           }));
         }
       }
+
+      // Nếu có tùy chọn chèn dòng trống giữa các câu
+      if (insertBlankLine) {
+        const isLastQuestionOverall = (gIdx === groups.length - 1 && qIdxInGroup === group.questions.length - 1);
+        if (!isLastQuestionOverall) {
+          contentParagraphs.push(new Paragraph({
+            spacing: { before: 0, after: 0 },
+            children: [
+              new TextRun({
+                text: "",
+                font: FONT_FAMILY,
+                size: 24
+              })
+            ]
+          }));
+        }
+      }
     });
   });
 
@@ -506,8 +524,8 @@ export async function createExamDocxBlob(shuffledExam, headerInfo = {}, options 
     children: [
       new TextRun({
         text: isAnswerKey
-          ? `----------------------- HẾT (ĐÁP ÁN MÃ ĐỀ ${examCode}) -----------------------`
-          : '----------------------- HẾT -----------------------',
+          ? `_______________________ HẾT (ĐÁP ÁN MÃ ĐỀ ${examCode}) _______________________`
+          : '_______________________ HẾT _______________________',
         bold: true,
         color: isAnswerKey ? COLOR_BLUE : COLOR_BLACK,
         font: FONT_FAMILY,

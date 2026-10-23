@@ -1109,6 +1109,7 @@ function shuffleExamForCode(parsedExam, examCode, options = {}) {
     shuffleGroups = false,
     defaultLabelStyle = 'ABCD',
     numberingFormat = 'dot', // 'dot' (Câu 1.) hoặc 'colon' (Câu 1:)
+    numberingScope = 'all',
     startQuestionNumber = 1,
     baseSeed = 1337
   } = options;
@@ -1130,7 +1131,8 @@ function shuffleExamForCode(parsedExam, examCode, options = {}) {
   const shuffledGroups = [];
   const flatQuestions = [];
 
-  for (const group of groupsToProcess) {
+  for (let gIdx = 0; gIdx < groupsToProcess.length; gIdx++) {
+    const group = groupsToProcess[gIdx];
     const mode = group.mode || 'G';
     const labelStyle = group.labelStyle || defaultLabelStyle;
 
@@ -1153,9 +1155,15 @@ function shuffleExamForCode(parsedExam, examCode, options = {}) {
 
     // Hoán vị đáp án bên trong từng câu
     const finalGroupQuestions = [];
+    let groupQuestionIndex = 0;
     for (const q of groupQuestions) {
       globalQuestionIndex++;
-      const currentQNumber = startQuestionNumber + globalQuestionIndex - 1;
+      groupQuestionIndex++;
+
+      const currentQNumber = (numberingScope === 'group')
+        ? (startQuestionNumber + groupQuestionIndex - 1)
+        : (startQuestionNumber + globalQuestionIndex - 1);
+
       const qPrefix = numberingFormat === 'colon'
         ? `Câu ${currentQNumber}:`
         : (numberingFormat === 'paren' ? `Câu ${currentQNumber})` : `Câu ${currentQNumber}.`);
@@ -1181,6 +1189,8 @@ function shuffleExamForCode(parsedExam, examCode, options = {}) {
       const processedQuestion = {
         ...q,
         displayNumber: currentQNumber,
+        globalIndex: globalQuestionIndex,
+        groupNumber: gIdx + 1,
         displayPrefix: qPrefix,
         labelStyle,
         answers: answersWithLabels
@@ -1319,6 +1329,7 @@ async function createExamDocxBlob(shuffledExam, headerInfo = {}, options = {}) {
   } = headerInfo;
 
   const isAnswerKey = !!options.isAnswerKey;
+  const insertBlankLine = !!options.insertBlankLine;
   const examCode = shuffledExam.examCode;
   const FONT_FAMILY = 'Times New Roman';
   const COLOR_RED = 'FF0000';
@@ -1753,6 +1764,23 @@ async function createExamDocxBlob(shuffledExam, headerInfo = {}, options = {}) {
           }));
         }
       }
+
+      // Nếu có tùy chọn chèn dòng trống giữa các câu
+      if (insertBlankLine) {
+        const isLastQuestionOverall = (gIdx === groups.length - 1 && qIdxInGroup === group.questions.length - 1);
+        if (!isLastQuestionOverall) {
+          contentParagraphs.push(new Paragraph({
+            spacing: { before: 0, after: 0 },
+            children: [
+              new TextRun({
+                text: "",
+                font: FONT_FAMILY,
+                size: 24
+              })
+            ]
+          }));
+        }
+      }
     });
   });
 
@@ -1763,8 +1791,8 @@ async function createExamDocxBlob(shuffledExam, headerInfo = {}, options = {}) {
     children: [
       new TextRun({
         text: isAnswerKey
-          ? `----------------------- HẾT (ĐÁP ÁN MÃ ĐỀ ${examCode}) -----------------------`
-          : '----------------------- HẾT -----------------------',
+          ? `_______________________ HẾT (ĐÁP ÁN MÃ ĐỀ ${examCode}) _______________________`
+          : '_______________________ HẾT _______________________',
         bold: true,
         color: isAnswerKey ? COLOR_BLUE : COLOR_BLACK,
         font: FONT_FAMILY,
@@ -1880,7 +1908,7 @@ function extractQuestionAnswerKey(q) {
  * @param {Array<Object>} allShuffledExams Danh sách tất cả các mã đề thi đã hoán vị
  * @returns {Object} { headers: Array<string>, rows: Array<Object> }
  */
-function buildAnswerMatrix(allShuffledExams) {
+function buildAnswerMatrix(allShuffledExams, options = {}) {
   if (!allShuffledExams || allShuffledExams.length === 0) {
     return { headers: [], rows: [] };
   }
@@ -1888,11 +1916,20 @@ function buildAnswerMatrix(allShuffledExams) {
   const examCodes = allShuffledExams.map(e => e.examCode);
   const totalQuestions = allShuffledExams[0].flatQuestions.length;
   const rows = [];
+  const hasMultipleGroups = (allShuffledExams[0].groups && allShuffledExams[0].groups.length > 1);
+  const isGroupScope = (options.numberingScope === 'group');
 
   for (let i = 0; i < totalQuestions; i++) {
-    const qNum = allShuffledExams[0].flatQuestions[i].displayNumber || (i + 1);
+    const qSample = allShuffledExams[0].flatQuestions[i];
+    const qNum = qSample.displayNumber || (i + 1);
+    const questionLabel = (isGroupScope && hasMultipleGroups && qSample.groupNumber)
+      ? `P${qSample.groupNumber} - Câu ${qNum}`
+      : `Câu ${qNum}`;
+
     const row = {
       questionNumber: qNum,
+      questionLabel,
+      groupNumber: qSample.groupNumber,
       answers: {}
     };
 
@@ -1916,7 +1953,7 @@ function buildAnswerMatrix(allShuffledExams) {
  * @param {Object} headerInfo
  * @returns {Promise<Blob>}
  */
-async function createAnswerKeyDocxBlob(allShuffledExams, headerInfo = {}) {
+async function createAnswerKeyDocxBlob(allShuffledExams, headerInfo = {}, options = {}) {
   const docx = getDocx();
   if (!docx) {
     throw new Error('Thư viện docx chưa được nạp!');
@@ -1945,7 +1982,7 @@ async function createAnswerKeyDocxBlob(allShuffledExams, headerInfo = {}) {
   } = headerInfo;
 
   const FONT_FAMILY = 'Times New Roman';
-  const matrix = buildAnswerMatrix(allShuffledExams);
+  const matrix = buildAnswerMatrix(allShuffledExams, options);
 
   // Tiêu đề trang đáp án
   const titleParagraphs = [
@@ -2074,7 +2111,7 @@ async function createAnswerKeyDocxBlob(allShuffledExams, headerInfo = {}) {
             alignment: AlignmentType.CENTER,
             children: [
               new TextRun({
-                text: `Câu ${row.questionNumber}`,
+                text: row.questionLabel || `Câu ${row.questionNumber}`,
                 bold: true,
                 font: FONT_FAMILY,
                 size: 22
@@ -2340,7 +2377,7 @@ function renderExamPreview(parsedExam) {
   }
 
   let html = renderExamHeaderPreview();
-  let questionCounter = 0;
+  let globalQuestionCounter = 0;
   const imageMap = parsedExam.imageMap || state.imageMap || {};
 
   function renderFormattedContent(text) {
@@ -2382,6 +2419,12 @@ function renderExamPreview(parsedExam) {
   const startNumInput = typeof document !== 'undefined' ? document.getElementById('inpStartQNum') : null;
   const startQNum = (startNumInput && parseInt(startNumInput.value, 10)) || 1;
 
+  const selScope = typeof document !== 'undefined' ? document.getElementById('selNumberingScope') : null;
+  const numberingScope = selScope ? selScope.value : 'all';
+
+  const chkInsertBlank = typeof document !== 'undefined' ? document.getElementById('chkInsertBlankLine') : null;
+  const insertBlankLine = chkInsertBlank ? chkInsertBlank.checked : false;
+
   parsedExam.groups.forEach((group, gIdx) => {
     const modeBadge = group.mode || 'G';
     const isFixedGroup = group.fixed;
@@ -2411,9 +2454,13 @@ function renderExamPreview(parsedExam) {
         <div class="preview-questions-list">
     `;
 
-    group.questions.forEach((q) => {
-      questionCounter++;
-      const currentQNumber = startQNum + questionCounter - 1;
+    let groupQuestionCounter = 0;
+    group.questions.forEach((q, qIdxInGroup) => {
+      globalQuestionCounter++;
+      groupQuestionCounter++;
+      const currentQNumber = (numberingScope === 'group')
+        ? (startQNum + groupQuestionCounter - 1)
+        : (startQNum + globalQuestionCounter - 1);
       let qNumDisplay = `Câu ${currentQNumber}.`;
       if (currentNumberingFormat === 'colon') {
         qNumDisplay = `Câu ${currentQNumber}:`;
@@ -2466,6 +2513,10 @@ function renderExamPreview(parsedExam) {
           </div>
         </div>
       `;
+      const isLastQuestionOverall = (gIdx === parsedExam.groups.length - 1 && qIdxInGroup === group.questions.length - 1);
+      if (insertBlankLine && !isLastQuestionOverall) {
+        html += '<div class="preview-blank-line" style="height: 16px;" title="Dòng trống giữa các câu"></div>';
+      }
     });
 
     html += `
@@ -2646,15 +2697,20 @@ function getHeaderConfig() {
 function getMixingOptions() {
   const radioNumbering = document.querySelector('input[name="radioNumbering"]:checked');
   const numberingFormat = radioNumbering ? radioNumbering.value : 'dot';
+  const selScope = document.getElementById('selNumberingScope');
+  const numberingScope = selScope ? selScope.value : 'all';
   const startQNum = parseInt(document.getElementById('inpStartQNum').value, 10) || 1;
   const defaultLabelStyle = document.getElementById('selDefaultLabelStyle').value || 'ABCD';
-  const shuffleGroups = document.getElementById('chkShuffleGroups').checked;
+  const shuffleGroups = document.getElementById('chkShuffleGroups') ? document.getElementById('chkShuffleGroups').checked : false;
+  const insertBlankLine = document.getElementById('chkInsertBlankLine') ? document.getElementById('chkInsertBlankLine').checked : false;
 
   return {
     numberingFormat,
+    numberingScope,
     startQuestionNumber: startQNum,
     defaultLabelStyle,
-    shuffleGroups
+    shuffleGroups,
+    insertBlankLine
   };
 }
 
@@ -2715,7 +2771,7 @@ async function executeMixAndExport() {
     // 3. Tạo từng file Word cho mỗi mã đề (Đề thi & Đáp án chi tiết)
     for (const exam of shuffledExams) {
       // 3.1 File Đề thi (học sinh làm, không hiển thị đáp án)
-      const docxBlob = await createExamDocxBlob(exam, headerInfo, { isAnswerKey: false });
+      const docxBlob = await createExamDocxBlob(exam, headerInfo, { isAnswerKey: false, insertBlankLine: mixingOptions.insertBlankLine });
       const examFileName = `Đề_${exam.examCode}.docx`;
       zip.file(examFileName, docxBlob);
       const examUrl = URL.createObjectURL(docxBlob);
@@ -2727,7 +2783,7 @@ async function executeMixAndExport() {
       });
 
       // 3.2 File Đáp án chi tiết tương ứng (các câu đúng in đậm và có màu blue)
-      const answerDocxBlob = await createExamDocxBlob(exam, headerInfo, { isAnswerKey: true });
+      const answerDocxBlob = await createExamDocxBlob(exam, headerInfo, { isAnswerKey: true, insertBlankLine: mixingOptions.insertBlankLine });
       const answerFileName = `Đáp_Án_${exam.examCode}.docx`;
       zip.file(answerFileName, answerDocxBlob);
       const answerUrl = URL.createObjectURL(answerDocxBlob);
@@ -2740,7 +2796,7 @@ async function executeMixAndExport() {
     }
 
     // 4. Tạo file Word Bảng Đáp Án Ma Trận (tổng hợp tất cả các mã đề)
-    const answerBlob = await createAnswerKeyDocxBlob(shuffledExams, headerInfo);
+    const answerBlob = await createAnswerKeyDocxBlob(shuffledExams, headerInfo, mixingOptions);
     const safeMon = (headerInfo.mon || 'Mon_Hoc').trim().replace(/[\s/\\:*?"<>|]+/g, '_') || 'Mon_Hoc';
     const answerFileName = `Bảng_Đáp_Án_${safeMon}.docx`;
     zip.file(answerFileName, answerBlob);
@@ -3305,6 +3361,18 @@ function initEventListeners() {
     });
   });
 
+  // Cập nhật lại giao diện xem trước ngay lập tức khi đổi Cách đánh số câu (chung hoặc riêng từng nhóm)
+  const selNumberingScope = document.getElementById('selNumberingScope');
+  if (selNumberingScope) {
+    const updatePreviewOnScopeChange = () => {
+      if (state.parsedExam && state.parsedExam.valid) {
+        renderExamPreview(state.parsedExam);
+      }
+    };
+    selNumberingScope.addEventListener('change', updatePreviewOnScopeChange);
+    selNumberingScope.addEventListener('input', updatePreviewOnScopeChange);
+  }
+
   // Cập nhật lại giao diện xem trước ngay lập tức khi đổi Kiểu nhãn đáp án
   const selDefaultLabelStyle = document.getElementById('selDefaultLabelStyle');
   if (selDefaultLabelStyle) {
@@ -3344,6 +3412,16 @@ function initEventListeners() {
   const inpStartCode = document.getElementById("inpStartCode");
   if (inpStartCode) {
     inpStartCode.addEventListener("input", () => {
+      if (state.parsedExam && state.parsedExam.valid) {
+        renderExamPreview(state.parsedExam);
+      }
+    });
+  }
+
+  // Cập nhật lại giao diện xem trước khi đổi Chèn line trống giữa các câu
+  const chkInsertBlankLine = document.getElementById('chkInsertBlankLine');
+  if (chkInsertBlankLine) {
+    chkInsertBlankLine.addEventListener('change', () => {
       if (state.parsedExam && state.parsedExam.valid) {
         renderExamPreview(state.parsedExam);
       }
